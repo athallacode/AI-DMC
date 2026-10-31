@@ -1,0 +1,75 @@
+{
+  "versi": "0.1-draf",
+  "catatan": "Diturunkan dari Bagian 3 DOK-CoE-AIIS-DMC-001. Daftar jenis masih draf dan perlu dikonfirmasi admin CoE. Nama jenis wajib unik di seluruh taksonomi karena subkategori dan kategori diturunkan dari jenis.",
+  "kategori": [
+    {
+      "kode": "PND",
+      "nama": "Pendidikan dan Pengajaran",
+      "subkategori": [
+        { "nama": "SK mengajar dan beban kerja", "jenis": ["SK mengajar", "Surat tugas mengajar"] },
+        { "nama": "Perangkat perkuliahan", "jenis": ["RPS", "Kontrak perkuliahan", "Rubrik penilaian"] },
+        { "nama": "Nilai dan evaluasi pembelajaran", "jenis": ["Daftar nilai akhir", "Nilai EDOM"] },
+        { "nama": "Pembimbingan dan pengujian", "jenis": ["SK pembimbing TA/tesis", "SK penguji TA/tesis", "Berita acara sidang"] },
+        { "nama": "Bahan ajar", "jenis": ["Bahan ajar", "Buku ajar"] },
+        { "nama": "Pembinaan mahasiswa", "jenis": ["SK pembina kegiatan mahasiswa"] }
+      ]
+    },
+    {
+      "kode": "PNL",
+      "nama": "Penelitian",
+      "subkategori": [
+        { "nama": "Penugasan dan kontrak penelitian", "jenis": ["SK penelitian", "Kontrak hibah penelitian", "Surat tugas penelitian"] },
+        { "nama": "Proposal dan laporan penelitian", "jenis": ["Proposal penelitian", "Laporan kemajuan penelitian", "Laporan akhir penelitian"] },
+        { "nama": "Kerja sama riset", "jenis": ["Perjanjian kerja sama riset"] }
+      ]
+    },
+    {
+      "kode": "PKM",
+      "nama": "Pengabdian kepada Masyarakat",
+      "subkategori": [
+        { "nama": "Penugasan dan kontrak abdimas", "jenis": ["SK abdimas", "Kontrak abdimas"] },
+        { "nama": "Proposal dan mitra abdimas", "jenis": ["Proposal abdimas", "Surat kesediaan mitra"] },
+        { "nama": "Pelaporan abdimas", "jenis": ["Laporan akhir abdimas", "Berita acara kegiatan abdimas", "Dokumentasi kegiatan abdimas"] },
+        { "nama": "Luaran abdimas", "jenis": ["Luaran abdimas"] }
+      ]
+    },
+    {
+      "kode": "PUB",
+      "nama": "Publikasi dan HKI",
+      "subkategori": [
+        { "nama": "Artikel jurnal", "jenis": ["LoA jurnal", "Naskah artikel jurnal terbit", "Bukti indeks jurnal"] },
+        { "nama": "Prosiding", "jenis": ["Artikel prosiding", "Sertifikat presenter konferensi"] },
+        { "nama": "Buku dan bab buku", "jenis": ["Buku", "Bab buku"] },
+        { "nama": "HKI dan paten", "jenis": ["Sertifikat HKI", "Sertifikat paten"] },
+        { "nama": "Pendukung publikasi", "jenis": ["Bukti sitasi", "Surat reviewer jurnal"] }
+      ]
+    },
+    {
+      "kode": "PNJ",
+      "nama": "Penunjang",
+      "subkategori": [
+        { "nama": "Kepanitiaan", "jenis": ["SK kepanitiaan"] },
+        { "nama": "Keanggotaan", "jenis": ["SK keanggotaan CoE", "Bukti keanggotaan organisasi profesi"] },
+        { "nama": "Narasumber dan penugasan", "jenis": ["Sertifikat narasumber", "Surat tugas reviewer", "Surat tugas asesor"] }
+      ]
+    },
+    {
+      "kode": "ADM",
+      "nama": "Administrasi Kepegawaian dan Kualifikasi",
+      "subkategori": [
+        { "nama": "Jabatan dan kepangkatan", "jenis": ["SK jabatan fungsional", "SK pangkat"] },
+        { "nama": "Kualifikasi pendidikan", "jenis": ["Ijazah", "Transkrip nilai"] },
+        { "nama": "Sertifikasi", "jenis": ["Sertifikat pendidik (serdos)", "Sertifikat kompetensi"] },
+        { "nama": "Kinerja dosen", "jenis": ["SKP", "Laporan BKD"] },
+        { "nama": "Identitas", "jenis": ["KTP", "Kartu NIDN"] }
+      ]
+    },
+    {
+      "kode": "LAINNYA",
+      "nama": "Lainnya",
+      "subkategori": [
+        { "nama": "Lainnya", "jenis": ["Lainnya"] }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,32 @@
+# Data dosen: JANGAN PERNAH di-commit
+data/
+storage/
+pipeline/eval/hasil/
+*.pdf
+*.docx
+*.jpg
+*.jpeg
+*.png
+!docs/**/*.png
+!frontend/public/**
+
+# Rahasia
+.env
+.env.*
+!.env.example
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+.pytest_cache/
+
+# Node
+node_modules/
+.next/
+
+# Lain-lain
+.DS_Store
+.vscode/
+.idea/
