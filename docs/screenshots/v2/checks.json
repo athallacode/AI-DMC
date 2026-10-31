@@ -1,0 +1,167 @@
+{
+  "pages": [
+    {
+      "page": "unggah",
+      "width": 1280,
+      "scrollWidth": 1280,
+      "banner": false,
+      "h1": {
+        "family": "Inter, \"Inter Fallback\"",
+        "size": "44px",
+        "weight": "700",
+        "tracking": "-1.32px",
+        "lineHeight": "48.4px",
+        "color": "rgb(29, 29, 31)"
+      },
+      "subtitle": {
+        "family": "Inter, \"Inter Fallback\"",
+        "size": "17px",
+        "weight": "400",
+        "tracking": "normal",
+        "lineHeight": "24.65px",
+        "color": "rgb(134, 134, 139)"
+      }
+    },
+    {
+      "page": "arsip",
+      "width": 1280,
+      "scrollWidth": 1280,
+      "banner": false,
+      "h1": {
+        "family": "Inter, \"Inter Fallback\"",
+        "size": "44px",
+        "weight": "700",
+        "tracking": "-1.32px",
+        "lineHeight": "48.4px",
+        "color": "rgb(29, 29, 31)"
+      },
+      "subtitle": {
+        "family": "Inter, \"Inter Fallback\"",
+        "size": "17px",
+        "weight": "400",
+        "tracking": "normal",
+        "lineHeight": "24.65px",
+        "color": "rgb(134, 134, 139)"
+      }
+    },
+    {
+      "page": "unggah",
+      "width": 375,
+      "scrollWidth": 375,
+      "banner": false,
+      "h1": {
+        "family": "Inter, \"Inter Fallback\"",
+        "size": "34px",
+        "weight": "700",
+        "tracking": "-1.02px",
+        "lineHeight": "37.4px",
+        "color": "rgb(29, 29, 31)"
+      },
+      "subtitle": {
+        "family": "Inter, \"Inter Fallback\"",
+        "size": "17px",
+        "weight": "400",
+        "tracking": "normal",
+        "lineHeight": "24.65px",
+        "color": "rgb(134, 134, 139)"
+      }
+    },
+    {
+      "page": "arsip",
+      "width": 375,
+      "scrollWidth": 375,
+      "banner": false,
+      "h1": {
+        "family": "Inter, \"Inter Fallback\"",
+        "size": "34px",
+        "weight": "700",
+        "tracking": "-1.02px",
+        "lineHeight": "37.4px",
+        "color": "rgb(29, 29, 31)"
+      },
+      "subtitle": {
+        "family": "Inter, \"Inter Fallback\"",
+        "size": "17px",
+        "weight": "400",
+        "tracking": "normal",
+        "lineHeight": "24.65px",
+        "color": "rgb(134, 134, 139)"
+      }
+    },
+    {
+      "page": "verifikasi",
+      "width": 1280,
+      "scrollWidth": 1280,
+      "banner": false,
+      "h1": {
+        "family": "Inter, \"Inter Fallback\"",
+        "size": "44px",
+        "weight": "700",
+        "tracking": "-1.32px",
+        "lineHeight": "48.4px",
+        "color": "rgb(29, 29, 31)"
+      },
+      "subtitle": {
+        "family": "Inter, \"Inter Fallback\"",
+        "size": "17px",
+        "weight": "400",
+        "tracking": "normal",
+        "lineHeight": "24.65px",
+        "color": "rgb(134, 134, 139)"
+      }
+    },
+    {
+      "page": "verifikasi",
+      "width": 375,
+      "scrollWidth": 375,
+      "banner": false,
+      "h1": {
+        "family": "Inter, \"Inter Fallback\"",
+        "size": "34px",
+        "weight": "700",
+        "tracking": "-1.02px",
+        "lineHeight": "37.4px",
+        "color": "rgb(29, 29, 31)"
+      },
+      "subtitle": {
+        "family": "Inter, \"Inter Fallback\"",
+        "size": "17px",
+        "weight": "400",
+        "tracking": "normal",
+        "lineHeight": "24.65px",
+        "color": "rgb(134, 134, 139)"
+      }
+    }
+  ],
+  "font": [
+    {
+      "selector": "h1",
+      "fonts": [
+        {
+          "familyName": "Inter",
+          "postScriptName": "Inter-Bold",
+          "isCustomFont": true,
+          "glyphCount": 10
+        }
+      ]
+    },
+    {
+      "selector": ".page-heading p",
+      "fonts": [
+        {
+          "familyName": "Inter",
+          "postScriptName": "Inter",
+          "isCustomFont": true,
+          "glyphCount": 62
+        }
+      ]
+    }
+  ],
+  "keyboard": [
+    "Avatar Enter opens; Escape closes and returns focus; visible focus ring",
+    "Correction modal 25 Tab/25 Shift+Tab cycles; Escape and focus restoration"
+  ],
+  "errors": [],
+  "verificationCardSource": "Browser-only pending-state fixture; existing synthetic high.png; no backend document mutation",
+  "passed": true
+}

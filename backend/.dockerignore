@@ -1,0 +1,13 @@
+.venv
+.uv-cache
+__pycache__
+.pytest_cache
+tests
+*.db
+.env
+.test-tmp*
+tmp
+**/__pycache__
+**/*.pyc
+storage
+data
