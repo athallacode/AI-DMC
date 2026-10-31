@@ -2,6 +2,16 @@
 
 > Pasangan dari `docs/PEMBAGIAN_PERAN.md`. Dokumen peran menjelaskan **siapa pegang apa**, dokumen ini menjelaskan **apa saja yang harus dikerjakan, kapan, dan kapan dianggap selesai**.
 
+## Status Terakhir (31 Oktober 2026)
+
+1. Pipeline AI Minggu 1 selesai dan teruji di PDF digital, PDF scan, DOCX, dan foto HP.
+2. Repo sudah di-push ke GitHub dengan dokumen tim dan panduan desain.
+3. Temuan penting dari pengujian:
+   - Urutan field JSON Schema berpengaruh: `jenis` harus diisi paling akhir, setelah ringkasan dan alasan. Saat di urutan pertama, SK mengajar salah dibaca sebagai proposal.
+   - Kata "rencana" di definisi proposal membuat RPS ikut terbaca sebagai proposal, dengan skor 1,0. Voting 3 kali mengukur konsistensi, bukan kebenaran.
+   - PaddlePaddle 3.3 di Windows error saat oneDNN aktif, jadi oneDNN dimatikan.
+4. Berikutnya: B-04 pesan ke pembimbing, P1-03 dokumen nyata, P1-10 skor keyakinan.
+
 ## Cara Pakai
 1. Setiap tugas punya ID: `B-xx` (bersama), `P1-xx` (Orang 1), `P2-xx` (Orang 2).
 2. Jadikan setiap tugas satu GitHub Issue dengan judul diawali ID, misalnya `P1-05 Ekstraksi teks PDF dan DOCX`.
@@ -49,7 +59,7 @@ Ini momen di mana pekerjaan satu orang dibutuhkan orang lain. Paling rawan telat
 | B-11 | Laporan akhir dan demo | semua | Demo jalan dari upload sampai arsip, laporan diserahkan |
 
 ### Checklist Bersama
-- [ ] B-01 Setup repo
+- [x] B-01 Setup repo
 - [ ] B-02 Docker Compose
 - [ ] B-03 `.env.example`
 - [ ] B-04 Pesan ke pembimbing
@@ -100,25 +110,25 @@ Ini momen di mana pekerjaan satu orang dibutuhkan orang lain. Paling rawan telat
 | P1-19 | **Dokumentasi**: `pipeline/README.md` (cara pakai, metode skor, cara ganti model) + laporan akurasi final | semua | Orang lain bisa menjalankan pipeline hanya dari README |
 
 ### Checklist Orang 1
-- [ ] P1-01 Mock pipeline
-- [ ] P1-02 Setup lingkungan
-- [ ] P1-03 Dataset dummy + label
-- [ ] P1-04 `taxonomy.json`
-- [ ] P1-05 Ekstraksi teks
-- [ ] P1-06 OCR
-- [ ] P1-07 Klasifikasi LLM
-- [ ] P1-08 `process_document()`
-- [ ] P1-09 Evaluasi awal
-- [ ] P1-10 Skor keyakinan
-- [ ] P1-11 Pengaman prompt injection
-- [ ] P1-12 Dokumen panjang
+- [x] P1-01 Mock pipeline
+- [x] P1-02 Setup lingkungan (gemma4:e4b + PaddleOCR PP-OCRv6 di laptop)
+- [ ] P1-03 Dataset dummy + label (sebagian: 5 dokumen dummy sintetis, dokumen nyata belum)
+- [x] P1-04 `taxonomy.json` (draf, menunggu konfirmasi admin CoE)
+- [x] P1-05 Ekstraksi teks
+- [x] P1-06 OCR (oneDNN dimatikan karena bug PaddlePaddle 3.3 di Windows)
+- [x] P1-07 Klasifikasi LLM
+- [x] P1-08 `process_document()`
+- [x] P1-09 Evaluasi awal (5/5 benar di dokumen dummy)
+- [ ] P1-10 Skor keyakinan (sebagian: voting 3 kali; masih bisa yakin tapi salah)
+- [ ] P1-11 Pengaman prompt injection (sebagian: kode ada, belum dites di LLM asli)
+- [ ] P1-12 Dokumen panjang (sebagian: pemotongan teks ada, belum dites 30+ halaman)
 - [ ] P1-13 Few-shot dari koreksi
 - [ ] P1-14 Uji data asli
 - [ ] P1-15 Bantu integrasi
 - [ ] P1-16 Uji banding model
 - [ ] P1-17 Setup di server
 - [ ] P1-18 Kalibrasi ambang
-- [ ] P1-19 Dokumentasi pipeline
+- [ ] P1-19 Dokumentasi pipeline (sebagian: pipeline/README.md ada)
 
 ---
 
