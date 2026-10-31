@@ -18,15 +18,26 @@ pipeline/eval/hasil/
 # Python
 __pycache__/
 *.pyc
+*.pyo
 .venv/
 venv/
 .pytest_cache/
+.ruff_cache/
+*.db
+*.sqlite*
+.uv-cache/
+.test-tmp*/
 
 # Node
 node_modules/
 .next/
+*.tsbuildinfo
+test-results/
+playwright-report/
 
 # Lain-lain
 .DS_Store
 .vscode/
 .idea/
+tmp/
+coverage/

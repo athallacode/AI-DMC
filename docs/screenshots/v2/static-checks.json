@@ -1,0 +1,30 @@
+{
+  "tokenCount": 35,
+  "tokensMatchSkillV2": true,
+  "hexOutsideTokens": false,
+  "contrast": {
+    "ink": {
+      "surface": 16.83,
+      "bg": 15.46
+    },
+    "ink-2": {
+      "surface": 7.41,
+      "bg": 6.81
+    },
+    "ink-3": {
+      "surface": 3.62,
+      "bg": 3.33
+    },
+    "ink-4": {
+      "surface": 2.57,
+      "bg": 2.36
+    },
+    "accent": {
+      "surface": 4.88,
+      "bg": 4.48
+    }
+  },
+  "contrastDecision": "User chose exact v2 tokens; report low-contrast secondary/empty text as exception",
+  "backendDiff": "",
+  "apiClientDiff": ""
+}
