@@ -190,6 +190,8 @@ Hover: gelap sedikit. Tekan: `transform: scale(0.98)`. Fokus keyboard: ring 3px 
 - Glass, mengambang di kanan bawah (HP: sheet dari bawah), radius `--radius-lg`.
 - Tiap berkas satu baris: nama berkas, status teks ("Membaca teks", "Mengklasifikasi", "Selesai"), progress bar tipis 3px warna `--accent`.
 - Duplikat: teks "Sudah pernah diunggah" warna `--ink-3`, bukan merah.
+- Bisa dikecilkan menjadi satu baris ("Memproses 3 dokumen · sekitar 3 menit") supaya tidak menutupi daftar. Pilihan ini diingat di browser.
+- Saat semua dokumen selesai, tampilkan toast dengan tautan ke Kotak Verifikasi kalau ada yang perlu dicek.
 
 ### 5.5 Pill Status
 Radius pill, 12px/600, padding 4px 10px, pakai pasangan warna `--st-*`:
@@ -202,6 +204,8 @@ Radius pill, 12px/600, padding 4px 10px, pakai pasangan warna `--st-*`:
 - Jangan pakai gauge bulat atau speedometer.
 
 ### 5.7 Kartu Verifikasi (komponen terpenting)
+Satu dokumen tampil penuh dalam satu waktu. Di desktop, antrean dokumen (judul, jenis, keyakinan) ada di kolom kiri; di HP diganti penunjuk "Dokumen 1 dari 4" dengan tombol sebelumnya dan berikutnya. Tombol keputusan di HP menempel di atas tab bar (glass).
+
 Kartu putih, `--shadow-card`, radius `--radius-lg`. Dua kolom di desktop, bertumpuk di HP:
 1. **Kiri:** pratinjau dokumen (thumbnail halaman pertama) dengan radius `--radius-md` dan shadow `--shadow-raised` supaya terasa seperti kertas. Klik untuk perbesar.
 2. **Kanan:**
@@ -285,11 +289,11 @@ Dipakai untuk "Unggahan terakhir" dan tampilan HP arsip. Gaya list Settings / Fi
 |---|---|
 | Login | Kartu putih di tengah lebar 380px, `--shadow-card`, logo di atas, 2 input, 1 tombol. Latar `--bg` polos. |
 | Unggah | Judul laman + subjudul, dropzone, lalu "Unggahan terakhir" (grouped list, 5 item) dengan link "Lihat Arsip Saya" sejajar judul bagian. Panel antrean mengambang. |
-| Kotak Verifikasi | Judul + jumlah ("4 dokumen menunggu konfirmasi"), daftar kartu verifikasi bertumpuk dengan jarak 16px. Kalau kosong, empty state 5.10. |
+| Kotak Verifikasi | Judul + jumlah ("4 dokumen menunggu konfirmasi"), antrean di kiri dan satu kartu verifikasi fokus di kanan (5.7). Field kosong dilipat menjadi "3 data tidak ditemukan". Kalau kosong, empty state 5.10. |
 | Arsip Saya | Judul, toolbar filter, jumlah hasil, tabel. |
 
 Grid:
-1. Lebar konten maksimum 1080px, di tengah.
+1. Lebar konten maksimum 1080px di layar biasa, melebar sampai 1560px (layar ≥1200px) dan 1760px (≥1600px) supaya layar lebar tidak kosong. Di laptop pendek (tinggi ≤820px) judul dan jarak dirapatkan supaya tombol keputusan tetap terlihat.
 2. Padding samping 24px desktop, 16px HP.
 3. Jarak antar elemen kelipatan 4px (8, 12, 16, 24, 32, 48, 64).
 4. Jarak navbar ke judul laman 48px desktop, 32px HP.
