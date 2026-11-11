@@ -18,7 +18,7 @@ Kalau ragu, pilih yang **lebih sepi**. Aplikasi ini dipakai dosen untuk kerja, b
 1. **Tenang dan bersih.** Latar abu Apple flat, banyak ruang kosong, tanpa dekorasi.
 2. **Hierarki tegas.** Tiap laman punya satu judul besar yang jelas jadi titik awal mata. Beda ukuran judul dan body harus terasa, bukan tipis-tipis.
 3. **Kedalaman, bukan garis.** Elemen utama dipisahkan dari latar dengan shadow lembut, bukan border tebal. Border hanya untuk elemen sekunder dan pemisah di dalam kartu.
-4. **Satu warna aksen, dipakai hemat.** Biru AIIS hanya untuk tombol utama, link saat hover, fokus, dan status aktif. Teks biasa (termasuk nama dokumen di tabel) tetap `--ink`.
+4. **Satu warna aksen, dipakai hemat.** Biru Apple hanya untuk tombol utama, link saat hover, fokus, dan status aktif. Teks biasa (termasuk nama dokumen di tabel) tetap `--ink`.
 5. **Glass punya fungsi.** Dipakai untuk elemen yang mengambang di atas konten (navbar, modal, panel unggah, toast). Kartu konten utama tetap putih solid.
 6. **Satu laman, satu tugas utama.** Tombol utama cuma satu per layar.
 7. **Dosen tidak mengisi formulir dari nol.** UI menampilkan hasil AI yang sudah terisi, tugas dosen hanya Setujui atau Koreksi.
@@ -32,29 +32,31 @@ Tempel di `frontend/app/globals.css`:
 ```css
 :root {
   /* Latar dan permukaan */
-  --bg: #F5F5F7;              /* latar halaman, flat */
+  --bg: #F2F2F7;              /* latar halaman, flat (Apple systemGray6) */
   --surface: #FFFFFF;         /* kartu konten */
   --surface-muted: #FAFAFC;   /* hover baris, area sekunder */
-  --fill: #EDEDF0;            /* latar kapsul segmented, kotak ikon */
-  --border: #E5E5EA;          /* garis pemisah tipis */
+  --fill: #E5E5EA;            /* latar kapsul segmented, kotak ikon (Apple systemGray5) */
+  --border: #D1D1D6;          /* garis pemisah tipis, tepi input (Apple systemGray4) */
 
   /* Teks */
   --ink: #1D1D1F;             /* teks utama */
   --ink-2: #55555A;           /* teks sekunder */
   --ink-3: #6E6E73;           /* label, keterangan (kontras 4,7:1 di --bg) */
-  --ink-4: #707075;           /* placeholder, nilai kosong (minimal 4,5:1, huruf miring) */
+  --ink-4: #6C6C70;           /* placeholder, nilai kosong (minimal 4,5:1 di --bg, huruf miring) */
 
-  /* Aksen tunggal: biru AIIS */
-  --accent: #0B769B;          /* tombol utama, fokus, status aktif (minimal 4,5:1 di putih, --bg, dan --accent-soft) */
-  --accent-hover: #096A8B;
-  --accent-soft: #E6F4FA;     /* latar terpilih, highlight lembut */
-  --accent-brand: #2AABD2;    /* biru AIIS asli, khusus ikon / ilustrasi, BUKAN teks */
+  /* Aksen tunggal: biru Apple (varian kontras tinggi systemBlue) */
+  --accent: #1E6EF4;          /* latar tombol utama, fokus, status aktif (teks putih di atasnya 4,57:1) */
+  --accent-text: #1C66E3;     /* teks dan tautan biru (minimal 4,5:1 di putih, --bg, dan --accent-soft) */
+  --accent-hover: #1B62D9;
+  --accent-soft: #E8F0FE;     /* latar terpilih, highlight lembut */
+  --accent-brand: #0088FF;    /* Apple systemBlue bawaan, khusus ikon / ilustrasi, BUKAN teks */
 
   /* Status (hanya untuk pill status kecil) */
-  --st-proses-bg: #F2F2F7;    --st-proses-fg: #55555A;
-  --st-verif-bg: #FFF4E5;     --st-verif-fg: #9A5B00;
-  --st-ok-bg: #E8F6EE;        --st-ok-fg: #1E7A46;
-  --st-tolak-bg: #FDECEC;     --st-tolak-fg: #B3141B;
+  /* Diturunkan dari warna sistem Apple (hijau, oranye, merah), digelapkan sedikit agar teks pill minimal 4,5:1 */
+  --st-proses-bg: #E5E5EA;    --st-proses-fg: #55555A;
+  --st-verif-bg: #F9EEE6;     --st-verif-fg: #B74D00;
+  --st-ok-bg: #E6F3EA;        --st-ok-fg: #007F2E;
+  --st-tolak-bg: #FDE8EA;     --st-tolak-fg: #D41329;
 
   /* Merah Telkom: logo dan aksi destruktif saja */
   --telkom-red: #E1252B;
@@ -83,6 +85,8 @@ Tempel di `frontend/app/globals.css`:
 ```
 
 **Kenapa biru, bukan merah Telkom, sebagai aksen?** Di aplikasi, merah dibaca sebagai "bahaya / hapus". Kalau semua tombol merah, tombol Tolak jadi tidak terbedakan. Jadi merah Telkom hanya muncul di logo dan aksi destruktif.
+
+**Sumber warna: Apple Human Interface Guidelines (Color).** Aksen, abu, dan warna status diambil dari warna sistem Apple. Warna bawaan Apple (misalnya systemBlue `#0088FF`) hanya 2,2 sampai 3,6:1 di putih, jadi untuk teks dan tombol dipakai varian kontras tinggi, lalu digelapkan sedikit bila perlu supaya tetap minimal 4,5:1. Teks biru selalu memakai `--accent-text`; `--accent` untuk latar tombol, fokus, dan status aktif. Di web tidak ada API warna sistem Apple, jadi nilainya disalin ke token di atas dan perlu dicek ulang kalau Apple memperbarui panduannya.
 
 ---
 
@@ -171,11 +175,13 @@ Bayangan selalu netral (hitam transparan). **Tidak ada bayangan atau glow berwar
 
 | Jenis | Tampilan | Contoh |
 |---|---|---|
-| Utama | Latar `--accent`, teks putih 15px/600, radius pill, tinggi 40px, padding 0 20px | Setujui, Unggah |
+| Utama | Latar `--accent`, teks putih 15px/600, radius pill, tinggi 44px, padding 0 20px | Setujui, Unggah |
 | Sekunder | Latar `--accent-soft`, teks `--accent` | Koreksi |
 | Netral | Latar `--fill`, teks `--ink` | Pilih berkas lain |
 | Teks | Tanpa latar, teks `--accent` | Lihat detail |
 | Destruktif | Teks `--telkom-red`, tanpa latar; jadi solid merah hanya di dialog konfirmasi | Tolak |
+
+Area klik minimal 44×44 piksel, termasuk tombol ikon dan item filter di HP (Apple HIG Buttons). Maksimal satu atau dua tombol menonjol per tampilan, dan tombol destruktif tidak pernah jadi tombol utama walaupun paling sering dipilih.
 
 Hover: gelap sedikit. Tekan: `transform: scale(0.98)`. Fokus keyboard: ring 3px `--accent-soft` + outline 2px `--accent`. Jangan pernah hilangkan outline fokus.
 
@@ -219,7 +225,7 @@ Kartu putih, `--shadow-card`, radius `--radius-lg`. Dua kolom di desktop, bertum
 - Sheet/modal glass.
 - Semua field sudah terisi hasil AI. Field yang diubah dosen diberi titik kecil `--accent` di sampingnya.
 - Kategori, subkategori, jenis pakai dropdown dari endpoint `/taxonomy`.
-- Input: latar putih, border `--border`, radius `--radius-sm`, tinggi 40px, fokus border `--accent`.
+- Input: latar putih, border `--border`, radius `--radius-sm`, tinggi 44px, fokus border `--accent`.
 
 ### 5.9 Daftar Arsip
 - Toolbar filter (glass, sticky): kapsul segmented kategori (Semua, PND, PNL, PKM, PUB, PNJ, ADM, LAINNYA) memakai komponen 5.12, lalu dropdown status dan tahun (5.13).
