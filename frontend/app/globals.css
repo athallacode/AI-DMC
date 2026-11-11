@@ -9,11 +9,11 @@
   /* Teks */
   --ink: #1D1D1F;             /* teks utama */
   --ink-2: #55555A;           /* teks sekunder */
-  --ink-3: #86868B;           /* label, keterangan */
-  --ink-4: #A1A1A6;           /* placeholder, nilai kosong, teks nonaktif */
+  --ink-3: #6E6E73;           /* label, keterangan (kontras 4,7:1 di --bg, 5,1:1 di putih) */
+  --ink-4: #707075;           /* placeholder, nilai kosong (minimal 4,5:1, dibedakan dengan huruf miring) */
 
   /* Aksen tunggal: biru AIIS */
-  --accent: #0B7AA0;          /* tombol utama, fokus, status aktif (kontras 4,8:1 di putih) */
+  --accent: #0B769B;          /* tombol utama, fokus, status aktif (minimal 4,5:1 di putih, --bg, dan --accent-soft) */
   --accent-hover: #096A8B;
   --accent-soft: #E6F4FA;     /* latar terpilih, highlight lembut */
   --accent-brand: #2AABD2;    /* biru AIIS asli, khusus ikon / ilustrasi, BUKAN teks */
@@ -65,7 +65,7 @@ h2{font-size:22px;font-weight:600;letter-spacing:-.015em;line-height:1.25}
 .main{padding-top:48px}.page-heading{margin:0 0 32px}.page-heading p{font-size:17px;font-weight:400;color:var(--ink-3);line-height:1.45}
 .document-heading h2{font-size:17px;font-weight:600;letter-spacing:-.01em;line-height:1.3}
 label{color:var(--ink-3);line-height:1.4}.metadata dd{font-size:15px;line-height:1.5}.meta,.metadata dt{font-size:13px;font-weight:500;line-height:1.4;color:var(--ink-3)}
-.missing,input::placeholder{color:var(--ink-4)}
+.missing,input::placeholder{color:var(--ink-4)}.missing{font-style:italic}
 .status,.nav-count,.demo-pill{font-weight:600;letter-spacing:.01em}.confidence,.nav-count,.results-count,td{font-variant-numeric:tabular-nums}
 .primary,.secondary{font-size:15px;font-weight:600}.primary{height:40px;padding:0 20px}.card{border:0}
 @media(max-width:760px){.main{padding-top:32px}.page-heading{margin:0 0 32px}h1{font-size:34px}.page-heading p{font-size:17px}.section-heading h2{font-size:22px}}
@@ -96,3 +96,5 @@ button:active:not(:disabled),.button:active{transform:scale(.98)}
   .category-filter.segmented button{min-width:0;padding:0 8px;justify-content:center}
   .archive-mobile p{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 }
+.discard-confirm{position:sticky;top:-24px;z-index:2;margin:-4px 0 20px;padding:16px;border-radius:var(--radius-md);background:var(--st-verif-bg);color:var(--ink);display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between}.discard-confirm p{margin:0;font-size:14px}.discard-confirm>div{display:flex;gap:8px}
+.archive-search{display:flex;flex-direction:column;gap:6px;max-width:360px;font-size:12px;font-weight:600;color:var(--ink-3)}.archive-search input{height:36px;font-size:14px;font-weight:400}

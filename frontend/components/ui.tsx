@@ -3,6 +3,9 @@ import { createContext, useContext, useEffect, useRef, useState } from 'react';
 import { X, FileText, CircleAlert, ArrowUpRight } from 'lucide-react';
 import { Document, getFile, statusLabels } from '@/lib/api';
 
+// Pesan wajib isi dalam bahasa Indonesia, menggantikan pesan bawaan browser yang mengikuti bahasa sistem.
+type Field = HTMLInputElement | HTMLSelectElement;
+export const required = { required: true, onInvalid: (event: React.FormEvent<Field>) => event.currentTarget.setCustomValidity('Wajib diisi.'), onInput: (event: React.FormEvent<Field>) => event.currentTarget.setCustomValidity('') };
 export function Status({ status }: { status: string }) { return <span className={`status ${status}`}>{status === 'gagal' && <CircleAlert size={12} aria-hidden="true" />}{statusLabels[status] || status}</span>; }
 export const ConfidenceThreshold = createContext(.85);
 export function Confidence({ value, needsReview = false }: { value?: number | null; needsReview?: boolean }) {

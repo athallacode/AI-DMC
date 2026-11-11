@@ -41,11 +41,11 @@ Tempel di `frontend/app/globals.css`:
   /* Teks */
   --ink: #1D1D1F;             /* teks utama */
   --ink-2: #55555A;           /* teks sekunder */
-  --ink-3: #86868B;           /* label, keterangan */
-  --ink-4: #A1A1A6;           /* placeholder, nilai kosong, teks nonaktif */
+  --ink-3: #6E6E73;           /* label, keterangan (kontras 4,7:1 di --bg) */
+  --ink-4: #707075;           /* placeholder, nilai kosong (minimal 4,5:1, huruf miring) */
 
   /* Aksen tunggal: biru AIIS */
-  --accent: #0B7AA0;          /* tombol utama, fokus, status aktif (kontras 4,8:1 di putih) */
+  --accent: #0B769B;          /* tombol utama, fokus, status aktif (minimal 4,5:1 di putih, --bg, dan --accent-soft) */
   --accent-hover: #096A8B;
   --accent-soft: #E6F4FA;     /* latar terpilih, highlight lembut */
   --accent-brand: #2AABD2;    /* biru AIIS asli, khusus ikon / ilustrasi, BUKAN teks */
