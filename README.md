@@ -13,6 +13,8 @@ Semua pemrosesan AI berjalan di server lokal. Tidak ada dokumen yang dikirim ke 
 | [pipeline/README.md](pipeline/README.md) | Cara setup dan menjalankan pipeline AI |
 | [docs/PIPELINE_INTEGRATION.md](docs/PIPELINE_INTEGRATION.md) | Cara menghubungkan pipeline ke aplikasi dan batas pengujiannya |
 | [docs/PANDUAN_DOSEN.md](docs/PANDUAN_DOSEN.md) | Panduan penggunaan aplikasi untuk dosen |
+| [docs/PANDUAN_ADMIN.md](docs/PANDUAN_ADMIN.md) | Perintah pengelola `app.kelola`: akun, dokumen gagal, SK bersama |
+| [docs/PANDUAN_INSTALASI.md](docs/PANDUAN_INSTALASI.md) | Instalasi laptop dan server, operasional, cadangan, pemecahan masalah |
 | [AGENTS.md](AGENTS.md) | Aturan untuk AI coding agent (Codex, Claude Code) |
 | `.agents/skills/ai-dmc-apple-glass-ui/` | Panduan desain UI (Apple light + glass) |
 
