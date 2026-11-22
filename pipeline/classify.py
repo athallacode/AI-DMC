@@ -99,6 +99,17 @@ def saring_injeksi(teks: str) -> tuple[str, bool]:
     return "\n".join(PENGGANTI_INJEKSI if i in ditandai else b for i, b in enumerate(baris)), True
 
 
+POLA_PERIODE = re.compile(r"\b\d{4}\s*/\s*\d{4}\b")
+
+
+def saring_periode(periode: str | None) -> str | None:
+    """Periode harus menyebut tahun akademik (contoh "Ganjil 2026/2027" atau "2025/2026").
+    Tahun saja ("2024") sering dikarang LLM dari tanggal dokumen, jadi dikosongkan."""
+    if not periode or not POLA_PERIODE.search(periode):
+        return None
+    return periode.strip()
+
+
 def bungkus_dokumen(teks: str) -> str:
     """Bungkus teks dengan tag pembatas. Tag di dalam teks dinetralkan (anti prompt injection)."""
     aman = re.sub(r"<\s*(/?)\s*dokumen\b[^>]*>", r"< \1 dokumen>", teks, flags=re.IGNORECASE)
@@ -180,7 +191,7 @@ def klasifikasi(teks: str, klien: KlienLLM, taksonomi: Taxonomy, settings: Setti
         "judul": terpilih.judul,
         "nomor_dokumen": terpilih.nomor_dokumen,
         "tanggal_terbit": terpilih.tanggal_terbit,
-        "periode": terpilih.periode,
+        "periode": saring_periode(terpilih.periode),
         "dosen_terkait": [d.model_dump() for d in terpilih.dosen_terkait[:10]],
         "mitra_penerbit": terpilih.mitra_penerbit,
         "sumber_dana": terpilih.sumber_dana,

@@ -240,6 +240,18 @@ def test_tanggal_tidak_valid_dibuang(pdf_digital, settings):
     assert out["metadata"]["tanggal_terbit"] is None
 
 
+@pytest.mark.parametrize("periode, harapan", [
+    ("Ganjil 2026/2027", "Ganjil 2026/2027"),
+    ("2025/2026", "2025/2026"),
+    ("2024", None),
+    ("periode 2024", None),
+])
+def test_periode_tanpa_tahun_akademik_dikosongkan(pdf_digital, settings, periode, harapan):
+    llm = LLMPalsu([jawaban(periode=periode)])
+    out = process_document(str(pdf_digital), settings=settings, klien=llm, ocr_fn=ocr_palsu)
+    assert out["metadata"]["periode"] == harapan
+
+
 def test_json_rusak_diulang(pdf_digital):
     llm = LLMPalsu(["{bukan json", jawaban()])
     out = process_document(str(pdf_digital), settings=Settings(jumlah_voting=1), klien=llm, ocr_fn=ocr_palsu)
