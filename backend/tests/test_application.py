@@ -103,7 +103,12 @@ def test_file_access_linked_lecturer_and_confidential(context):
     with sessions() as db:
         db.add(DocumentLecturer(document_id=uuid.UUID(identifier), user_id=users[1].id, nama='dosen2', peran='Anggota'))
         db.commit()
+    # Tautan hasil tebakan AI belum memberi akses sebelum pengunggah menyetujui.
+    assert client.get(path, headers=headers(users[1])).status_code == 404
+    assert client.get('/documents', headers=headers(users[1])).json() == []
+    assert client.post(path + '/approve', headers=headers(users[0])).status_code == 200
     assert client.get(path, headers=headers(users[1])).status_code == 200
+    assert client.get(path + '/file', headers=headers(users[1])).status_code == 200
     with sessions() as db:
         db.get(Document, uuid.UUID(identifier)).tingkat_akses = 'rahasia'
         db.commit()
@@ -126,6 +131,24 @@ def test_correction_approval_and_audit(context):
         assert {row.aksi for row in db.scalars(select(AuditLog)).all()} == {'upload', 'koreksi'}
     assert client.get('/admin/koreksi/export', headers=headers(users[0])).status_code == 403
     assert len(client.get('/admin/koreksi/export', headers=headers(users[2])).json()) == 1
+
+
+def test_linked_lecturer_can_view_but_not_change(context):
+    client, _, users = context
+    identifier = upload(client, users[0])['documents'][0]['id']
+    path = '/documents/' + identifier
+    # Pengunggah menautkan dosen2 lewat koreksi (NIP cocok dengan akun dosen2).
+    response = client.patch(path, headers=headers(users[0]), json={'dosen_terkait': [{'nama': 'Dosen Dua', 'nip': 'dosen2', 'peran': 'Pengajar'}]})
+    assert response.status_code == 200, response.text
+    assert client.get(path, headers=headers(users[1])).status_code == 200
+    assert client.post(path + '/approve', headers=headers(users[1])).status_code == 403
+    assert client.post(path + '/reject', headers=headers(users[1])).status_code == 403
+    assert client.patch(path, headers=headers(users[1]), json={'judul': 'Diubah orang lain'}).status_code == 403
+    assert client.patch(path, headers=headers(users[1]), json={'dosen_terkait': []}).status_code == 403
+    after = client.get(path, headers=headers(users[0])).json()
+    assert after['status'] == 'terverifikasi'
+    assert after['judul'] != 'Diubah orang lain'
+    assert {d['nip'] for d in after['dosen_terkait']} >= {'dosen2'}
 
 
 def test_approve_reject_state_and_validation(context):

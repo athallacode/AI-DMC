@@ -5,7 +5,7 @@ import { useCallback, useEffect, useState } from 'react';
 import Shell from '@/components/shell';
 import { Correction } from '@/components/correction';
 import { Empty, ErrorMessage, Modal, Preview, Status } from '@/components/ui';
-import { api, date, Document, statusLabels, token } from '@/lib/api';
+import { api, date, Document, statusLabels, token, User } from '@/lib/api';
 import { judulDokumen } from '@/lib/format';
 export default function ArchivePage() {
   const [docs,setDocs] = useState<Document[]>([]); const [category,setCategory] = useState(''); const [status,setStatus] = useState('terverifikasi'); const [year,setYear] = useState(''); const [error,setError] = useState(''); const [loading,setLoading] = useState(true); const [selected,setSelected] = useState<Document | null>(null); const [search,setSearch] = useState('');
@@ -16,7 +16,8 @@ export default function ArchivePage() {
   const activeFilters = (category ? 1 : 0) + (status !== 'terverifikasi' ? 1 : 0) + (year ? 1 : 0);
   useEffect(() => {if(!token()) return; let active=true; const query = new URLSearchParams(); if(category) query.set('kategori',category); if(status) query.set('status',status); if(year) query.set('tahun',year); setLoading(true); setError(''); api<Document[]>(`/documents?${query}`).then(data => {if(active) setDocs(data);}).catch(e => {if(active) setError(e.message);}).finally(() => {if(active) setLoading(false);}); return () => {active=false;};}, [category,status,year,reload]);
   // Dokumen yang lolos otomatis belum dicek dosen: dosen terkaitnya masih berstatus belum dikonfirmasi.
-  const loadFresh = useCallback(async () => { if (!token()) return; try { const recent = (await api<Document[]>('/documents?status=terverifikasi')).slice(0, 20); const details = await Promise.all(recent.map(doc => api<Document>(`/documents/${doc.id}`))); setFresh(details.filter(doc => doc.dosen_terkait?.some(d => !d.dikonfirmasi))); } catch {} }, []);
+  // Hanya dokumen unggahan sendiri, karena hanya pengunggah yang boleh menyetujui atau mengoreksi.
+  const loadFresh = useCallback(async () => { if (!token()) return; try { const [me, all] = await Promise.all([api<User>('/auth/me'), api<Document[]>('/documents?status=terverifikasi')]); const recent = all.filter(doc => doc.owner_id === me.id).slice(0, 20); const details = await Promise.all(recent.map(doc => api<Document>(`/documents/${doc.id}`))); setFresh(details.filter(doc => doc.dosen_terkait?.some(d => !d.dikonfirmasi))); } catch {} }, []);
   useEffect(() => { void loadFresh(); }, [loadFresh, reload]);
   async function confirm(doc: Document) { setConfirming(doc.id); setError(''); try { await api(`/documents/${doc.id}/approve`, {method:'POST'}); setFresh(items => items.filter(item => item.id !== doc.id)); } catch(e) { setError(e instanceof Error ? e.message : 'Konfirmasi belum berhasil.'); } finally { setConfirming(''); } }
   return <Shell><div className="page-heading"><div><h1>Arsip Saya</h1><p>Temukan dokumen berdasarkan kategori, status, dan tahun terbit.</p></div></div>

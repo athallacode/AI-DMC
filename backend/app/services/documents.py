@@ -6,7 +6,9 @@ from ..models import AuditLog, Document, DocumentLecturer, User
 
 
 def access_clause(user):
-    linked = select(DocumentLecturer.document_id).where(DocumentLecturer.user_id == user.id)
+    # Dosen tertaut baru bisa melihat setelah pengunggah menyetujui. Sebelum itu tautan masih tebakan AI
+    # (NIP hasil baca dokumen) dan bisa salah orang.
+    linked = select(DocumentLecturer.document_id).where(DocumentLecturer.user_id == user.id, DocumentLecturer.dikonfirmasi.is_(True))
     return or_(Document.owner_id == user.id, and_(Document.tingkat_akses != 'rahasia', Document.id.in_(linked)))
 
 
@@ -17,6 +19,14 @@ def accessible(db, document_id, user, lock=False):
     document = db.scalar(query)
     if not document:
         raise HTTPException(404, 'Dokumen tidak ditemukan.')
+    return document
+
+
+def owned(db, document_id, user, lock=False):
+    """Dokumen yang boleh diubah: hanya pengunggah. Dosen tertaut cukup melihat."""
+    document = accessible(db, document_id, user, lock=lock)
+    if document.owner_id != user.id:
+        raise HTTPException(403, 'Hanya pengunggah yang dapat menyetujui, menolak, atau mengoreksi dokumen ini.')
     return document
 
 

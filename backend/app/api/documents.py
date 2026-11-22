@@ -11,7 +11,7 @@ from ..database import get_db
 from ..models import Correction, Document, DocumentLecturer, User
 from ..schemas import CorrectionRequest
 from ..security import current_user
-from ..services.documents import accessible, access_clause, audit, ensure_reviewable, replace_lecturers, serialize
+from ..services.documents import accessible, access_clause, audit, ensure_reviewable, owned, replace_lecturers, serialize
 from ..services.pipeline import process_document
 from ..services.storage import save_upload
 from ..services.taxonomy import valid_classification
@@ -93,7 +93,7 @@ def original_file(document_id: uuid.UUID, user: User = Depends(current_user), db
 
 @router.post('/{document_id}/approve')
 def approve(document_id: uuid.UUID, user: User = Depends(current_user), db: Session = Depends(get_db)):
-    doc = accessible(db, document_id, user, lock=True)
+    doc = owned(db, document_id, user, lock=True)
     ensure_reviewable(doc)
     doc.status = 'terverifikasi'
     for lecturer in db.scalars(select(DocumentLecturer).where(DocumentLecturer.document_id == doc.id)).all():
@@ -105,7 +105,7 @@ def approve(document_id: uuid.UUID, user: User = Depends(current_user), db: Sess
 
 @router.post('/{document_id}/reject')
 def reject(document_id: uuid.UUID, user: User = Depends(current_user), db: Session = Depends(get_db)):
-    doc = accessible(db, document_id, user, lock=True)
+    doc = owned(db, document_id, user, lock=True)
     ensure_reviewable(doc)
     doc.status = 'ditolak'
     audit(db, user.id, 'reject', doc.id)
@@ -115,7 +115,7 @@ def reject(document_id: uuid.UUID, user: User = Depends(current_user), db: Sessi
 
 @router.patch('/{document_id}')
 def correct(document_id: uuid.UUID, body: CorrectionRequest, user: User = Depends(current_user), db: Session = Depends(get_db)):
-    doc = accessible(db, document_id, user, lock=True)
+    doc = owned(db, document_id, user, lock=True)
     ensure_reviewable(doc)
     data = body.model_dump(exclude_unset=True)
     if not data:

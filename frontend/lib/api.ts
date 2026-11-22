@@ -1,6 +1,6 @@
 export type User = { id: string; nama: string; username: string; peran: string };
 export type Dosen = { nama: string; nip: string | null; peran: string | null; user_id?: string | null; dikonfirmasi?: boolean };
-export type Document = { id: string; nama_berkas: string; jenis_berkas?: string; kategori?: string | null; subkategori?: string | null; jenis?: string | null; judul?: string | null; nomor_dokumen?: string | null; tanggal_terbit?: string | null; periode?: string | null; metadata_lain?: Record<string, string | null>; dosen_terkait?: Dosen[]; skor_keyakinan?: number | null; status: string; created_at: string; ringkasan?: string | null; error?: string | null; model_dipakai?: string | null };
+export type Document = { id: string; owner_id?: string; nama_berkas: string; jenis_berkas?: string; kategori?: string | null; subkategori?: string | null; jenis?: string | null; judul?: string | null; nomor_dokumen?: string | null; tanggal_terbit?: string | null; periode?: string | null; metadata_lain?: Record<string, string | null>; dosen_terkait?: Dosen[]; skor_keyakinan?: number | null; status: string; created_at: string; ringkasan?: string | null; error?: string | null; model_dipakai?: string | null };
 export type Taxonomy = { source: string; categories: { kode: string; nama: string; subkategori: { nama: string; jenis: string[] }[] }[] };
 export const API = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 export function token() { return typeof window === 'undefined' ? null : sessionStorage.getItem('ai-dmc-token'); }
