@@ -46,7 +46,7 @@ Yang **tidak** disimpan: password dalam bentuk asli (hanya hash Argon2), dan isi
 |---|---|
 | Dosen pengunggah | Semua dokumen yang ia unggah |
 | Dosen lain yang tertaut | Dokumen tempat NIP-nya tercantum, **setelah pengunggah menyetujui**, kecuali dokumen bertingkat akses **rahasia**. Hanya melihat dan mengunduh |
-| Admin CoE (akun aplikasi) | Hanya dokumen yang ia unggah atau tempat ia tertaut. Belum ada laman admin |
+| Admin CoE (akun aplikasi) | Hanya dokumen yang ia unggah atau tempat ia tertaut. Belum ada laman admin. Tugas admin dikerjakan pengelola lewat perintah `app.kelola` (lihat Panduan Admin) |
 | Pengelola server | Secara teknis bisa membaca seluruh database dan folder berkas. Karena itu dibatasi lewat aturan di Bagian 8 |
 
 Cara dosen lain tertaut ke dokumen:
@@ -113,7 +113,7 @@ Log audit tidak memuat isi dokumen. Log hanya dibaca pengelola untuk menelusuri 
 
 - Tidak membuka isi dokumen dosen kecuali untuk memperbaiki masalah yang dilaporkan, dan mencatat setiap akses semacam itu.
 - Menjaga `.env`, kunci SSH, dan cadangan. Akses SSH memakai kunci, bukan password.
-- Menutup akun dosen yang pindah tugas atau berhenti (sementara lewat database, lihat Bagian 10 no. 1).
+- Menutup akun dosen yang pindah tugas atau berhenti dengan `kelola akun tutup` (lihat Panduan Admin).
 - Memasang pembaruan keamanan sistem operasi secara berkala.
 - Tidak menambahkan panggilan ke layanan AI publik dalam kode.
 
@@ -133,13 +133,13 @@ Temuan dari kode per 22 November 2026, diurutkan dari yang paling penting. Dua c
 
 | No | Hal | Dampak | Usulan |
 |---|---|---|---|
-| 1 | Akun tidak punya status aktif atau nonaktif | Akun dosen yang berhenti hanya bisa dihapus atau diganti password-nya langsung di database | Tambah status aktif pada akun |
+| 1 | Akun tidak punya status aktif atau nonaktif | Akun ditutup dengan mengganti password secara acak (`kelola akun tutup`). Sesi yang sedang terbuka tetap berlaku sampai habis | Tambah status aktif pada akun |
 | 2 | Tidak ada batas percobaan login, dan login gagal tidak dicatat | Password bisa ditebak berulang tanpa jejak | Batasi percobaan per akun dan per alamat, catat login gagal |
 | 3 | Belum ada skrip cadangan | Data hilang kalau disk rusak | Pasang skrip cadangan harian sebelum dipakai dosen |
 | 4 | Berkas di folder `storage/` tidak dienkripsi | Siapa pun yang memegang disk atau cadangan bisa membaca dokumen | Enkripsi disk server dan disk cadangan |
 | 5 | Belum ada fitur hapus dan masa simpan | Dokumen yang salah unggah tersimpan selamanya | Tetapkan masa simpan, buat prosedur hapus oleh pengelola |
 | 6 | Tingkat akses tidak bisa diatur dari aplikasi | Dokumen sensitif tidak bisa ditandai rahasia oleh dosen | Tambah pilihan tingkat akses di form koreksi |
-| 7 | Belum ada laman admin | Akun, penautan dosen, dan proses ulang dokumen gagal harus lewat server | Buat laman admin sederhana |
+| 7 | Belum ada laman admin | Akun, penautan dosen, dan proses ulang dokumen gagal dikerjakan pengelola lewat perintah `app.kelola` di server (tercatat di log audit) | Buat laman admin sederhana |
 | 8 | Belum ada HTTPS dan reverse proxy di konfigurasi deploy | Password dan dokumen lewat jaringan tanpa enkripsi | Pasang HTTPS sebelum dibuka ke dosen (lihat Kebutuhan Server) |
 | 9 | Token sesi disimpan di sessionStorage browser | Rentan dicuri kalau ada celah skrip di halaman | Pertimbangkan cookie HttpOnly saat pengembangan lanjutan |
 
