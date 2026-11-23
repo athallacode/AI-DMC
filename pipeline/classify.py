@@ -110,6 +110,52 @@ def saring_periode(periode: str | None) -> str | None:
     return periode.strip()
 
 
+def _rapatkan(teks: str) -> str:
+    """Huruf kecil, tanpa spasi, tanda hubung seragam: supaya beda spasi atau jenis strip hasil OCR tidak dianggap beda."""
+    return re.sub(r"\s+", "", re.sub(r"[‐-―−]", "-", teks)).lower()
+
+
+def saring_nomor(nomor: str | None, teks: str) -> str | None:
+    """Nomor dokumen hanya dipakai kalau benar-benar tertulis di teks. LLM kadang menyusun nomor sendiri."""
+    if not nomor:
+        return None
+    return nomor if _rapatkan(nomor) in _rapatkan(teks) else None
+
+
+BULAN = {
+    1: ("januari", "january", "jan"), 2: ("februari", "pebruari", "february", "feb", "peb"),
+    3: ("maret", "march", "mar"), 4: ("april", "apr"), 5: ("mei", "may"), 6: ("juni", "june", "jun"),
+    7: ("juli", "july", "jul"), 8: ("agustus", "august", "agu", "agt", "ags", "aug"),
+    9: ("september", "sept", "sep"), 10: ("oktober", "october", "okt", "oct"),
+    11: ("november", "nopember", "nov", "nop"), 12: ("desember", "december", "des", "dec"),
+}
+
+
+def saring_tanggal(tanggal: str | None, teks: str) -> str | None:
+    """Tanggal (YYYY-MM-DD) hanya dipakai kalau tanggal itu tertulis di teks, dalam bentuk angka
+    (15-08-2026, 15/8/2026, 2026-08-15) atau nama bulan (15 Agustus 2026, August 15, 2026).
+    LLM kadang mengarang tanggal dari tahun atau periode yang disebut dokumen."""
+    if not tanggal:
+        return None
+    try:
+        t, b, h = (int(x) for x in tanggal.split("-"))
+    except ValueError:
+        return None
+    if b not in BULAN:
+        return None
+    sumber = re.sub(r"\s+", " ", teks.lower())
+    hari = rf"0?{h}"
+    bulan = "|".join(BULAN[b])
+    pemisah = r"\s*[-/.]\s*"
+    pola = (
+        rf"(?<!\d){hari}{pemisah}0?{b}{pemisah}{t}(?!\d)",            # 15-08-2026, 15/8/2026
+        rf"(?<!\d){t}{pemisah}0?{b}{pemisah}{hari}(?!\d)",            # 2026-08-15
+        rf"(?<!\d){hari}(?:st|nd|rd|th)?\s*(?:{bulan})\b\.?,?\s*{t}(?!\d)",  # 15 Agustus 2026
+        rf"\b(?:{bulan})\b\.?\s*{hari}(?:st|nd|rd|th)?,?\s*{t}(?!\d)",       # August 15, 2026
+    )
+    return tanggal if any(re.search(p, sumber) for p in pola) else None
+
+
 def bungkus_dokumen(teks: str) -> str:
     """Bungkus teks dengan tag pembatas. Tag di dalam teks dinetralkan (anti prompt injection)."""
     aman = re.sub(r"<\s*(/?)\s*dokumen\b[^>]*>", r"< \1 dokumen>", teks, flags=re.IGNORECASE)
@@ -187,10 +233,16 @@ def klasifikasi(teks: str, klien: KlienLLM, taksonomi: Taxonomy, settings: Setti
 
     # metadata diambil dari panggilan pertama yang memilih jenis pemenang (panggilan suhu 0 diutamakan)
     terpilih = next(h for h in hasil if jenis_valid(h) == jenis_menang)
+    nomor = saring_nomor(terpilih.nomor_dokumen, teks)
+    tanggal = saring_tanggal(terpilih.tanggal_terbit, teks)
+    if terpilih.nomor_dokumen and not nomor:
+        catatan.append("Nomor dokumen dari AI tidak ditemukan di teks, dikosongkan.")
+    if terpilih.tanggal_terbit and not tanggal:
+        catatan.append("Tanggal terbit dari AI tidak ditemukan di teks, dikosongkan.")
     metadata = {
         "judul": terpilih.judul,
-        "nomor_dokumen": terpilih.nomor_dokumen,
-        "tanggal_terbit": terpilih.tanggal_terbit,
+        "nomor_dokumen": nomor,
+        "tanggal_terbit": tanggal,
         "periode": saring_periode(terpilih.periode),
         "dosen_terkait": [d.model_dump() for d in terpilih.dosen_terkait[:10]],
         "mitra_penerbit": terpilih.mitra_penerbit,

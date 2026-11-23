@@ -8,7 +8,7 @@ import re
 
 import pytest
 
-from pipeline.classify import PENGGANTI_INJEKSI, bungkus_dokumen, klasifikasi, potong_teks, saring_injeksi
+from pipeline.classify import PENGGANTI_INJEKSI, bungkus_dokumen, klasifikasi, potong_teks, saring_injeksi, saring_nomor, saring_tanggal
 from pipeline.config import Settings
 from pipeline.extract import BerkasTidakDidukung, ekstrak_teks
 from pipeline.main import process_document
@@ -287,3 +287,48 @@ def test_mock_sesuai_kontrak(nama, status):
     assert set(out) == KUNCI_KONTRAK
     assert set(out["metadata"]) == KUNCI_METADATA
     assert out["status"] == status
+
+
+@pytest.mark.parametrize("teks, harapan", [
+    ("Ditetapkan di Bandung pada tanggal 15 Agustus 2026", "2026-08-15"),
+    ("Bandung, 15 agt. 2026", "2026-08-15"),
+    ("Tanggal: 15-08-2026", "2026-08-15"),
+    ("Tanggal 15 / 8 / 2026", "2026-08-15"),
+    ("Date: 2026-08-15", "2026-08-15"),
+    ("Issued on August 15th, 2026", "2026-08-15"),
+    ("15th August 2026", "2026-08-15"),
+    ("Tahun Akademik 2026/2027", None),          # tanggal dikarang dari tahun saja
+    ("Bandung, 25 Agustus 2026", None),           # hari lain, jangan cocok sebagian
+    ("Bandung, 15 September 2026", None),         # bulan lain
+])
+def test_saring_tanggal_harus_tertulis(teks, harapan):
+    assert saring_tanggal("2026-08-15", teks) == harapan
+
+
+def test_saring_tanggal_tanggal_satu_digit():
+    assert saring_tanggal("2018-01-04", "Bandung, 4 Januari 2018") == "2018-01-04"
+    assert saring_tanggal("2018-01-04", "Bandung, 04/01/2018") == "2018-01-04"
+    assert saring_tanggal("2018-01-04", "Bandung, 14 Januari 2018") is None
+    assert saring_tanggal(None, "apa saja") is None
+
+
+@pytest.mark.parametrize("nomor, teks, harapan", [
+    ("123/AKD/FIF/2026", "NOMOR 123/AKD/FIF/2026", "123/AKD/FIF/2026"),
+    ("123/AKD/FIF/2026", "Nomor : 123 / AKD / FIF / 2026", "123/AKD/FIF/2026"),   # spasi OCR
+    ("045/SK–FIF/2026", "No. 045/SK-FIF/2026", "045/SK–FIF/2026"),                 # jenis strip beda
+    ("SK/2026/001", "NOMOR 123/AKD/FIF/2026", None),                              # nomor karangan
+    (None, "NOMOR 123", None),
+])
+def test_saring_nomor_harus_tertulis(nomor, teks, harapan):
+    assert saring_nomor(nomor, teks) == harapan
+
+
+def test_metadata_tidak_tertulis_dikosongkan_dengan_catatan(settings):
+    llm = LLMPalsu([jawaban(nomor_dokumen="999/KARANGAN/2026", tanggal_terbit="2026-01-01")])
+    hasil = klasifikasi(TEKS_SK, llm, load_taxonomy(), settings)
+    assert hasil.metadata["nomor_dokumen"] is None
+    assert hasil.metadata["tanggal_terbit"] is None
+    assert any("Nomor dokumen" in c for c in hasil.catatan)
+    benar = klasifikasi(TEKS_SK, LLMPalsu([jawaban()]), load_taxonomy(), settings)
+    assert benar.metadata["nomor_dokumen"] == "123/AKD/FIF/2026"
+    assert benar.metadata["tanggal_terbit"] == "2026-08-15"
