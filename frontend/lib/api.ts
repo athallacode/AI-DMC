@@ -4,14 +4,28 @@ export type Document = { id: string; owner_id?: string; nama_berkas: string; jen
 export type Taxonomy = { source: string; categories: { kode: string; nama: string; subkategori: { nama: string; jenis: string[] }[] }[] };
 export const API = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 export function token() { return typeof window === 'undefined' ? null : sessionStorage.getItem('ai-dmc-token'); }
-export function logout() { sessionStorage.removeItem('ai-dmc-token'); window.location.assign('/login'); }
-export async function api<T>(path: string, options: RequestInit = {}): Promise<T> {
+export const DRAF_PREFIX = 'ai-dmc-draf-';
+// Keluar lewat tombol menghapus draf koreksi (komputer bersama). Sesi yang habis sendiri tidak menghapusnya,
+// supaya draf bisa dipakai lagi setelah masuk kembali di tab yang sama.
+export function logout(hapusDraf = false) {
+  sessionStorage.removeItem('ai-dmc-token');
+  if (hapusDraf) Object.keys(sessionStorage).filter(key => key.startsWith(DRAF_PREFIX)).forEach(key => sessionStorage.removeItem(key));
+  window.location.assign('/login');
+}
+export function simpanSesi(accessToken: string, username: string) { sessionStorage.setItem('ai-dmc-token', accessToken); sessionStorage.setItem('ai-dmc-username', username); }
+export function usernameSesi() { return typeof window === 'undefined' ? '' : sessionStorage.getItem('ai-dmc-username') || ''; }
+/** Sesi habis saat pemanggil memilih tetap di laman (misalnya formulir koreksi yang belum tersimpan). */
+export class SesiHabis extends Error {}
+export async function api<T>(path: string, options: RequestInit = {}, opsi: { tetapDiLaman?: boolean } = {}): Promise<T> {
   const headers = new Headers(options.headers);
   if (token()) headers.set('Authorization', `Bearer ${token()}`);
   if (options.body && !(options.body instanceof FormData)) headers.set('Content-Type', 'application/json');
   const response = await fetch(`${API}${path}`, { ...options, headers, cache: 'no-store' });
   if (!response.ok) {
-    if (response.status === 401 && path !== '/auth/login') logout();
+    if (response.status === 401 && path !== '/auth/login') {
+      if (opsi.tetapDiLaman) throw new SesiHabis('Sesi Anda berakhir. Masuk lagi untuk melanjutkan.');
+      logout();
+    }
     const result = await response.json().catch(() => ({}));
     throw new Error(typeof result.detail === 'string' ? result.detail : 'Permintaan belum berhasil. Periksa isian dan coba lagi.');
   }
