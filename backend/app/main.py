@@ -5,7 +5,7 @@ from fastapi.encoders import jsonable_encoder
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import select, text
 from sqlalchemy.orm import Session
-from .api import auth, documents
+from .api import admin, auth, documents
 from .config import get_settings
 from .database import SessionLocal, get_db
 from .models import Correction, User
@@ -25,6 +25,7 @@ app = FastAPI(title='AI-DMC API', version='0.1.0', lifespan=lifespan)
 app.add_middleware(CORSMiddleware, allow_origins=get_settings().cors_origins.split(','), allow_methods=['GET', 'POST', 'PATCH'], allow_headers=['Authorization', 'Content-Type'])
 app.include_router(auth.router)
 app.include_router(documents.router)
+app.include_router(admin.router)
 
 
 @app.get('/health')

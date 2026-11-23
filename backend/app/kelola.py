@@ -1,92 +1,39 @@
-"""Perintah pengelola AI-DMC (pengganti laman admin yang belum ada).
+"""Perintah pengelola AI-DMC lewat terminal server. Fungsi yang sama tersedia di laman Admin.
 
-Jalankan dari folder backend (atau di dalam container backend):
+Jalankan dari folder backend (atau lewat perintah `kelola` di server):
     python -m app.kelola --help
 
 Setiap perintah yang mengubah data wajib menyebut --oleh (nama pengelola) dan dicatat di log audit.
 Kolom user_id di log audit berisi akun yang terdampak; nama pengelola ada di detail.oleh.
+Logikanya ada di app/services/admin.py, dipakai bersama dengan laman Admin.
 """
 import argparse
-import csv
-import secrets
 import sys
-import uuid
 from pathlib import Path
 
-from sqlalchemy import select
-
 from .database import SessionLocal
-from .models import AuditLog, Document, DocumentLecturer, User
-from .security import hash_password
-from .services import pipeline
+from .models import Document
+from .services import admin, pipeline
+from .services.admin import Galat
 
-PERAN = ('dosen', 'admin')
-
-
-class Galat(Exception):
-    """Kesalahan yang ditampilkan ke pengelola tanpa traceback."""
-
-
-def buat_password() -> str:
-    return secrets.token_urlsafe(12)
-
-
-def catat(db, user_id, aksi, oleh, document_id=None, **detail):
-    db.add(AuditLog(user_id=user_id, aksi=f'kelola_{aksi}', document_id=document_id, detail={'oleh': oleh, **detail}))
-
-
-def cari_akun(db, username) -> User:
-    user = db.scalar(select(User).where(User.username == username))
-    if not user:
-        raise Galat(f'Akun "{username}" tidak ditemukan.')
-    return user
-
-
-def cari_dokumen(db, identifier) -> Document:
-    try:
-        doc = db.get(Document, uuid.UUID(identifier))
-    except ValueError:
-        raise Galat(f'Kode dokumen "{identifier}" tidak valid.') from None
-    if not doc:
-        raise Galat(f'Dokumen {identifier} tidak ditemukan.')
-    return doc
-
-
-def _tambah_akun(db, username, nama, nip, peran, oleh) -> str:
-    username = (username or '').strip()
-    nama = (nama or '').strip()
-    nip = (nip or '').strip() or None
-    peran = (peran or 'dosen').strip().lower()
-    if not username or not nama:
-        raise Galat('Username dan nama wajib diisi.')
-    if peran not in PERAN:
-        raise Galat(f'Peran "{peran}" tidak dikenal. Pilih dosen atau admin.')
-    if db.scalar(select(User).where(User.username == username)):
-        raise Galat(f'Username "{username}" sudah dipakai.')
-    if nip and db.scalar(select(User).where(User.nip == nip)):
-        raise Galat(f'NIP {nip} sudah dipakai akun lain.')
-    password = buat_password()
-    user = User(username=username, nama=nama, nip=nip, peran=peran, password_hash=hash_password(password))
-    db.add(user)
-    db.flush()
-    catat(db, user.id, 'buat_akun', oleh, peran=peran)
-    return password
+PERAN = admin.PERAN
 
 
 # ---------- perintah akun ----------
 
 def akun_daftar(args):
     with SessionLocal() as db:
-        users = db.scalars(select(User).order_by(User.peran, User.username)).all()
-        print(f'{"USERNAME":<20} {"PERAN":<6} {"NIP":<22} NAMA')
-        for u in users:
-            print(f'{u.username:<20} {u.peran:<6} {(u.nip or "-"):<22} {u.nama}')
-        print(f'\n{len(users)} akun.')
+        akun = admin.daftar_akun(db)
+    print(f'{"USERNAME":<20} {"PERAN":<6} {"NIP":<22} NAMA')
+    for a in akun:
+        tanda = '  (ditutup)' if a['ditutup'] else ''
+        print(f'{a["username"]:<20} {a["peran"]:<6} {(a["nip"] or "-"):<22} {a["nama"]}{tanda}')
+    print(f'\n{len(akun)} akun.')
 
 
 def akun_buat(args):
     with SessionLocal() as db:
-        password = _tambah_akun(db, args.username, args.nama, args.nip, args.peran, args.oleh)
+        _, password = admin.tambah_akun(db, args.username, args.nama, args.nip, args.peran, args.oleh, via='perintah')
         db.commit()
     print(f'Akun "{args.username}" dibuat. Password awal (hanya tampil sekali): {password}')
     print('Sampaikan langsung ke pemilik akun, jangan lewat grup chat.')
@@ -97,28 +44,15 @@ def akun_impor(args):
     keluar = Path(args.keluar)
     if keluar.exists():
         raise Galat(f'{keluar} sudah ada. Pilih nama berkas lain supaya tidak tertimpa.')
-    with sumber.open(encoding='utf-8-sig', newline='') as f:
-        baris = list(csv.DictReader(f))
-    if not baris:
-        raise Galat('Berkas CSV kosong.')
-    kolom = {k.strip().lower() for k in baris[0].keys() if k}
-    if not {'username', 'nama'} <= kolom:
-        raise Galat('CSV wajib punya kolom username dan nama. Kolom nip dan peran boleh ada.')
-    hasil, gagal = [], []
+    isi = sumber.read_text(encoding='utf-8-sig')
     with SessionLocal() as db:
-        for nomor, row in enumerate(baris, start=2):
-            row = {(k or '').strip().lower(): (v or '').strip() for k, v in row.items()}
-            try:
-                with db.begin_nested():
-                    password = _tambah_akun(db, row.get('username'), row.get('nama'), row.get('nip'), row.get('peran') or 'dosen', args.oleh)
-                hasil.append((row['username'], row['nama'], password))
-            except Galat as e:
-                gagal.append(f'baris {nomor}: {e}')
+        hasil, gagal = admin.impor_akun(db, isi, args.oleh, via='perintah')
         db.commit()
+    import csv
     with keluar.open('w', encoding='utf-8-sig', newline='') as f:
         tulis = csv.writer(f)
         tulis.writerow(['username', 'nama', 'password_awal'])
-        tulis.writerows(hasil)
+        tulis.writerows((u.username, u.nama, p) for u, p in hasil)
     print(f'{len(hasil)} akun dibuat. Password awal ditulis ke {keluar}.')
     print('Hapus berkas itu setelah password dibagikan.')
     if gagal:
@@ -129,20 +63,14 @@ def akun_impor(args):
 
 def akun_reset_password(args):
     with SessionLocal() as db:
-        user = cari_akun(db, args.username)
-        password = buat_password()
-        user.password_hash = hash_password(password)
-        catat(db, user.id, 'reset_password', args.oleh)
+        password = admin.reset_password(db, admin.cari_akun(db, args.username), args.oleh, via='perintah')
         db.commit()
     print(f'Password "{args.username}" diganti. Password baru (hanya tampil sekali): {password}')
 
 
 def akun_tutup(args):
     with SessionLocal() as db:
-        user = cari_akun(db, args.username)
-        # Password acak yang tidak pernah ditampilkan: akun tidak bisa dipakai masuk lagi.
-        user.password_hash = hash_password(secrets.token_urlsafe(48))
-        catat(db, user.id, 'tutup_akun', args.oleh)
+        admin.tutup_akun(db, admin.cari_akun(db, args.username), args.oleh, via='perintah')
         db.commit()
     print(f'Akun "{args.username}" ditutup. Dokumennya tetap tersimpan.')
     print('Sesi yang sedang terbuka tetap berlaku sampai habis (paling lama 60 menit).')
@@ -153,10 +81,7 @@ def akun_tutup(args):
 
 def dokumen_gagal(args):
     with SessionLocal() as db:
-        docs = db.execute(
-            select(Document, User.username).join(User, User.id == Document.owner_id)
-            .where(Document.status == 'gagal').order_by(Document.created_at)
-        ).all()
+        docs = admin.dokumen_gagal(db)
         for doc, username in docs:
             galat = (doc.metadata_lain or {}).get('_error') or '-'
             print(f'{doc.id}  {doc.created_at:%Y-%m-%d %H:%M}  {username:<15} {doc.nama_berkas}')
@@ -166,12 +91,8 @@ def dokumen_gagal(args):
 
 def dokumen_proses_ulang(args):
     with SessionLocal() as db:
-        doc = cari_dokumen(db, args.kode)
-        if doc.status != 'gagal':
-            raise Galat(f'Status dokumen {doc.status}. Hanya dokumen gagal yang bisa diproses ulang.')
-        doc.status = 'diproses'
-        doc.metadata_lain = {}
-        catat(db, doc.owner_id, 'proses_ulang', args.oleh, doc.id)
+        doc = admin.cari_dokumen(db, args.kode)
+        admin.siapkan_proses_ulang(db, doc, args.oleh, via='perintah')
         db.commit()
         doc_id = doc.id
     print('Memproses ulang. Bisa makan beberapa menit untuk dokumen scan...')
@@ -185,18 +106,7 @@ def dokumen_proses_ulang(args):
 
 def dokumen_tautkan(args):
     with SessionLocal() as db:
-        doc = cari_dokumen(db, args.kode)
-        user = cari_akun(db, args.username)
-        if user.id == doc.owner_id:
-            raise Galat('Akun itu adalah pengunggah dokumen ini.')
-        tautan = db.scalar(select(DocumentLecturer).where(DocumentLecturer.document_id == doc.id, DocumentLecturer.user_id == user.id))
-        if tautan:
-            tautan.dikonfirmasi = True
-            if args.peran:
-                tautan.peran = args.peran
-        else:
-            db.add(DocumentLecturer(document_id=doc.id, user_id=user.id, nama=user.nama, nip=user.nip, peran=args.peran, dikonfirmasi=True))
-        catat(db, user.id, 'tautkan', args.oleh, doc.id, peran=args.peran)
+        admin.tautkan(db, admin.cari_dokumen(db, args.kode), admin.cari_akun(db, args.username), args.peran, args.oleh, via='perintah')
         db.commit()
     print(f'"{args.username}" sekarang tertaut ke dokumen {args.kode} dan bisa melihatnya.')
 
