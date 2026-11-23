@@ -32,7 +32,7 @@ Selain berita acara ini, dokumen berikut ada di folder `docs/` dalam format Mark
 |---|---|---|---|
 | 1 | Laporan Akhir | Laporan-Akhir-AI-DMC.pdf | 8 |
 | 2 | Panduan Dosen | Panduan-Dosen-AI-DMC.pdf | 16 |
-| 3 | Panduan Admin dan Pengelola | Panduan-Admin-AI-DMC.pdf | 6 |
+| 3 | Panduan Admin dan Pengelola | Panduan-Admin-AI-DMC.pdf | 7 |
 | 4 | Kebijakan Data dan Keamanan | Kebijakan-Data-AI-DMC.pdf | 7 |
 | 5 | Kebutuhan Server | Kebutuhan-Server-AI-DMC.pdf | 5 |
 | 6 | Panduan Instalasi dan Operasional | Panduan-Instalasi-AI-DMC.pdf | 11 |
