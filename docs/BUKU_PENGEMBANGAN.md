@@ -103,6 +103,8 @@ Dokumen asli belum punya label jenis dan tanggal, jadi akurasi jenis untuk data 
 
 Petunjuk jenis di prompt ditambahkan setelah melihat kesalahan pada 45 dokumen uji yang sama (sebelumnya jenis 86,7%), jadi angka 97,8% kemungkinan terlalu optimis untuk dokumen baru. Evaluasi berikutnya perlu set uji yang tidak dipakai saat menyetel prompt.
 
+Diulang 23 November 2026 setelah `saring_nomor` dan `saring_tanggal` ditambahkan: hasil sama (nomor dan tanggal tetap 100%), jadi penyaring tidak membuang nilai yang benar. Periode naik ke 100% tanpa perubahan aturan periode, jadi anggap sebagai variasi. Catatan: `run_eval` tidak mengatur logging, sehingga catatan penyaring (level INFO) tidak tercetak. Tambahkan `logging.basicConfig(level=logging.INFO)` kalau ingin melihatnya.
+
 ## 5. Backend
 
 ### 5.1 Modul
@@ -118,7 +120,8 @@ Petunjuk jenis di prompt ditambahkan setelah melihat kesalahan pada 45 dokumen u
 | `services/storage.py` | Penyimpanan berkas dan pemeriksaan tanda tangan berkas |
 | `services/taxonomy.py` | Memuat taksonomi dan memvalidasi klasifikasi |
 | `integrations/mock.py`, `integrations/real.py` | Adapter pipeline |
-| `kelola.py` | Perintah pengelola (lihat Panduan Admin) |
+| `kelola.py` | Perintah pengelola di terminal (lihat Panduan Admin) |
+| `api/admin.py`, `services/admin.py` | Endpoint laman Admin. Logika akun dan dokumen ada di `services/admin.py`, dipakai bersama oleh `kelola.py` |
 | `seed.py` | Akun dummy, hanya di development |
 
 ### 5.2 Database
@@ -142,7 +145,7 @@ Aturan ada di satu tempat, `services/documents.py`:
 - Pengunggah melihat dan mengubah dokumennya sendiri.
 - Dosen tertaut hanya **melihat**, dan hanya setelah pengunggah menyetujui (`dikonfirmasi`), dan hanya kalau tingkat aksesnya bukan `rahasia`.
 - Setujui, tolak, dan koreksi hanya untuk pengunggah (`owned`, selain itu 403).
-- Admin tidak punya akses khusus ke dokumen. Admin hanya bisa mengekspor riwayat koreksi.
+- Admin tidak punya akses khusus ke isi dokumen. Lewat laman Admin, admin hanya melihat data ringkas (nama berkas, pengunggah, status, waktu) untuk dokumen gagal dan pencarian SK bersama.
 - Dokumen yang tidak boleh dilihat dijawab 404, bukan 403, supaya keberadaannya tidak bocor.
 
 Setiap endpoint dokumen baru wajib memakai `accessible()` atau `owned()`, bukan query sendiri.
@@ -159,6 +162,7 @@ Semua ada di `config.py` dan `.env.example`. Yang paling sering diubah: `CONFIDE
 | `app/unggah/page.tsx` | Unggah banyak berkas, antrean, polling status tiap 2,5 detik |
 | `app/verifikasi/page.tsx` | Kotak Verifikasi: pratinjau, setujui, tolak, koreksi |
 | `app/arsip/page.tsx` | Arsip dengan filter kategori, status, tahun |
+| `app/admin/page.tsx` | Laman Admin: akun, dokumen gagal, SK bersama, log aktivitas. Menu hanya muncul untuk peran admin |
 | `components/` | Kerangka laman (`shell.tsx`), komponen dasar (`ui.tsx`), formulir koreksi (`correction.tsx`) |
 | `lib/api.ts` | Semua panggilan API, token di `sessionStorage` |
 | `lib/format.ts` | Format tanggal, status, dan label |
@@ -213,9 +217,12 @@ Periksa berkas yang dihasilkan di `alembic/versions/`, karena autogenerate tidak
 3. Tambahkan tes di `backend/tests/`, termasuk tes bahwa dosen lain tidak bisa mengakses.
 4. Perbarui kontrak API di `docs/PEMBAGIAN_PERAN.md`.
 
-### Menambah perintah pengelola
+### Menambah fitur pengelola
 
-Tambahkan fungsi dan parser di `backend/app/kelola.py`. Perintah yang mengubah data wajib memakai `oleh(sp)` dan memanggil `catat()` untuk log audit. Tambahkan tes di `backend/tests/test_kelola.py`, dan perbarui Panduan Admin.
+1. Tulis logikanya di `backend/app/services/admin.py`. Perubahan data wajib memanggil `catat()` untuk log audit, dengan `oleh` berisi nama pelaku.
+2. Laman Admin: tambahkan endpoint di `api/admin.py` (lindungi dengan `admin_saja`) dan tampilannya di `frontend/app/admin/page.tsx`. Tes di `backend/tests/test_admin.py`, termasuk tes bahwa akun dosen mendapat 403.
+3. Perintah terminal: tambahkan fungsi dan parser di `kelola.py` yang memanggil fungsi yang sama. Perintah yang mengubah data wajib memakai `oleh(sp)`. Tes di `backend/tests/test_kelola.py`.
+4. Perbarui Panduan Admin dan kontrak di `docs/PEMBAGIAN_PERAN.md`.
 
 ### Mengganti model LLM
 
@@ -225,7 +232,7 @@ Ubah `OLLAMA_MODEL`, unduh dengan `ollama pull`, lalu jalankan evaluasi akurasi.
 
 | Pemeriksaan | Perintah | Butuh |
 |---|---|---|
-| Tes backend (23 tes) | `cd backend`, lalu `PYTHONPATH=.. ../.venv/Scripts/python.exe -m pytest -q` | Tidak butuh PostgreSQL atau Ollama |
+| Tes backend (30 tes) | `cd backend`, lalu `PYTHONPATH=.. ../.venv/Scripts/python.exe -m pytest -q` | Tidak butuh PostgreSQL atau Ollama |
 | Tes pipeline (53 tes) | `.venv/Scripts/python.exe -m pytest pipeline/tests -q` | Tidak butuh OCR atau Ollama |
 | Tipe frontend | `cd frontend`, lalu `npm run typecheck` | |
 | Build frontend | `npm run build` | Internet untuk Google Fonts |
@@ -253,7 +260,7 @@ Diurutkan dari yang paling berdampak. Sumber lain: `docs/TINDAK_LANJUT.md` dan K
 **Fitur admin** (sekarang lewat perintah `kelola`)
 
 5. Status akun aktif dan nonaktif (sekarang akun ditutup dengan password acak).
-6. Laman admin di aplikasi.
+6. Laman Admin: tambah hapus dokumen, batalkan Ditolak, dan ubah nama atau NIP akun.
 7. Hapus dokumen dan kebijakan retensi.
 8. Membatalkan status Ditolak.
 9. Mengubah tingkat akses dokumen dari UI.

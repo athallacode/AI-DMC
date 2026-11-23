@@ -46,7 +46,7 @@ Yang **tidak** disimpan: password dalam bentuk asli (hanya hash Argon2), dan isi
 |---|---|
 | Dosen pengunggah | Semua dokumen yang ia unggah |
 | Dosen lain yang tertaut | Dokumen tempat NIP-nya tercantum, **setelah pengunggah menyetujui**, kecuali dokumen bertingkat akses **rahasia**. Hanya melihat dan mengunduh |
-| Admin CoE (akun aplikasi) | Hanya dokumen yang ia unggah atau tempat ia tertaut. Belum ada laman admin. Tugas admin dikerjakan pengelola lewat perintah `app.kelola` (lihat Panduan Admin) |
+| Admin CoE (akun aplikasi) | Hanya dokumen yang ia unggah atau tempat ia tertaut. Mengelola akun, memproses ulang dokumen gagal, dan menautkan SK bersama lewat laman Admin (atau perintah `app.kelola` di server). Tidak bisa membuka isi dokumen dosen lain (lihat Panduan Admin) |
 | Pengelola server | Secara teknis bisa membaca seluruh database dan folder berkas. Karena itu dibatasi lewat aturan di Bagian 8 |
 
 Cara dosen lain tertaut ke dokumen:
@@ -140,7 +140,7 @@ Temuan dari kode per 22 November 2026, diurutkan dari yang paling penting. Dua c
 | 4 | Berkas di folder `storage/` tidak dienkripsi | Siapa pun yang memegang disk atau cadangan bisa membaca dokumen | Enkripsi disk server dan disk cadangan |
 | 5 | Belum ada fitur hapus dan masa simpan | Dokumen yang salah unggah tersimpan selamanya | Tetapkan masa simpan, buat prosedur hapus oleh pengelola |
 | 6 | Tingkat akses tidak bisa diatur dari aplikasi | Dokumen sensitif tidak bisa ditandai rahasia oleh dosen | Tambah pilihan tingkat akses di form koreksi |
-| 7 | Belum ada laman admin | Akun, penautan dosen, dan proses ulang dokumen gagal dikerjakan pengelola lewat perintah `app.kelola` di server (tercatat di log audit) | Buat laman admin sederhana |
+| 7 | Laman Admin belum bisa menghapus dokumen, membatalkan status Ditolak, atau mengubah nama dan NIP akun | Permintaan seperti itu masih ditangani pengelola server bersama Admin CoE | Tambah laman admin sederhana |
 | 8 | Belum ada HTTPS dan reverse proxy di konfigurasi deploy | Password dan dokumen lewat jaringan tanpa enkripsi | Pasang HTTPS sebelum dibuka ke dosen (lihat Kebutuhan Server) |
 | 9 | Token sesi disimpan di sessionStorage browser | Rentan dicuri kalau ada celah skrip di halaman | Pertimbangkan cookie HttpOnly saat pengembangan lanjutan |
 

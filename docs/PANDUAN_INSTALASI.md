@@ -231,6 +231,8 @@ Berkas pendukung ada di folder `deploy/`:
    sudo kelola akun buat --username <admin> --nama "<Nama Admin CoE>" --peran admin --oleh "<Nama Pengelola>"
    ```
 
+   Setelah itu, Admin CoE masuk ke aplikasi dan mengelola akun lain dari laman Admin.
+
 8. Pasang cadangan harian (Bagian 6) dan coba pulihkan sekali.
 9. Uji 10 dokumen sintetis campuran (PDF digital, PDF scan, foto, DOCX) dari `tools/generate_dummy_format_nyata.py`. Periksa semuanya selesai tanpa status gagal, dan waktu per dokumen wajar (di bawah 1 menit dengan GPU).
 10. Buat akun dosen dari CSV (Panduan Admin Bagian 2), uji coba dengan beberapa dosen, baru dibuka untuk semua.

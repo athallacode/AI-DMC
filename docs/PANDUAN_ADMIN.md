@@ -8,7 +8,33 @@ Panduan ini untuk dua peran:
 - **Admin CoE**: memutuskan siapa yang dapat akun, menjawab pertanyaan dosen, menetapkan kategori dokumen.
 - **Pengelola server**: menjalankan perintah di server atas permintaan Admin CoE.
 
-Aplikasi belum punya laman admin. Semua tugas di panduan ini dikerjakan lewat perintah `app.kelola` di server. Perintah yang mengubah data wajib menyebut nama pengelola (`--oleh`) dan dicatat di log audit.
+Ada dua cara mengerjakan tugas admin:
+
+- **Laman Admin di aplikasi** (cara utama): masuk dengan akun berperan admin. Menu **Admin** muncul di navigasi, dan admin langsung diarahkan ke sana setelah masuk.
+- **Perintah `kelola` di server** (cadangan): untuk pengelola server, misalnya saat membuat akun admin pertama atau kalau aplikasi web tidak bisa dibuka.
+
+Keduanya memakai aturan yang sama dan sama-sama dicatat di log audit dengan nama pelakunya.
+
+## Laman Admin
+
+Akun admin pertama dibuat oleh pengelola server lewat perintah (Panduan Instalasi Bagian 4 langkah 7). Setelah itu, admin bisa membuat akun admin lain dari laman ini.
+
+Laman Admin punya tiga bagian:
+
+| Bagian | Isi |
+|---|---|
+| **Akun** | Daftar semua akun dengan jumlah dokumen dan status Aktif atau Ditutup. Tombol **Tambah akun**, **Impor CSV**, **Reset password**, dan **Tutup**. Akun yang ditutup dibuka lagi dengan **Buka lagi** (membuat password baru) |
+| **Dokumen** | Dokumen gagal dengan tombol **Proses ulang**. Bagian **SK bersama**: cari dokumen berdasarkan nama berkas, lalu **Tautkan dosen** |
+| **Log aktivitas** | 200 aktivitas terakhir (masuk, unggah, setujui, pengelolaan akun) dan tombol **Unduh riwayat koreksi** |
+
+Hal yang perlu diperhatikan:
+
+- Password baru (dari Tambah akun, Impor CSV, atau Reset password) **hanya tampil sekali**. Salin atau unduh CSV-nya, sampaikan langsung ke pemilik akun, lalu hapus berkas CSV-nya.
+- Admin tidak bisa menutup akunnya sendiri.
+- Admin tetap tidak bisa membuka isi dokumen dosen. Yang terlihat hanya nama berkas, pengunggah, waktu, dan status.
+- Format CSV impor sama dengan Bagian 2. Ringkasannya ada di laman, di bawah daftar akun.
+
+Bagian 1 sampai 3 di bawah ini menjelaskan cara yang sama lewat perintah `kelola`.
 
 ## 1. Cara menjalankan perintah
 
@@ -147,11 +173,11 @@ Dosen yang NIP-nya tertulis di dokumen sebenarnya tertaut otomatis setelah pengu
 
 | Permintaan | Tindakan |
 |---|---|
-| Belum punya akun | Buat akun (Bagian 2) |
-| Lupa password | `akun reset-password` |
-| "Terlalu banyak percobaan masuk yang gagal" | Akun terkunci 15 menit setelah 5 kali salah password. Minta dosen menunggu. Kalau dosen yakin bukan dia yang mencoba, cek `login_gagal` di log audit dan reset password-nya |
-| Dokumen berstatus Gagal | `dokumen proses-ulang` |
-| "Sudah pernah diunggah" padahal belum | Cari pemilik dokumen, lalu `dokumen tautkan` |
+| Belum punya akun | Laman Admin, Akun, **Tambah akun** (atau Bagian 2) |
+| Lupa password | Laman Admin, Akun, **Reset password** (atau `akun reset-password`) |
+| "Terlalu banyak percobaan masuk yang gagal" | Akun terkunci 15 menit setelah 5 kali salah password. Minta dosen menunggu. Kalau dosen yakin bukan dia yang mencoba, cek aktivitas "Gagal masuk" di Log aktivitas dan reset password-nya |
+| Dokumen berstatus Gagal | Laman Admin, Dokumen, **Proses ulang** (atau `dokumen proses-ulang`) |
+| "Sudah pernah diunggah" padahal belum | Laman Admin, Dokumen, SK bersama: cari nama berkasnya, lalu **Tautkan dosen** (atau `dokumen tautkan`) |
 | Salah menolak dokumen | Belum ada perintah. Catat kode dokumennya dan teruskan ke Admin CoE; perubahan status lewat database hanya dengan persetujuan Admin CoE |
 | Minta dokumen dihapus | Belum ada perintah. Catat permintaannya, putuskan bersama Admin CoE sesuai Kebijakan Data |
 | Hasil AI sering salah untuk jenis tertentu | Catat contoh dokumen dan jenis yang benar, teruskan ke tim pengembang |
@@ -211,9 +237,8 @@ Di log audit, aksi lewat perintah `kelola` bernama `kelola_...`. Kolom `user_id`
 
 ## 7. Batasan saat ini
 
-- Belum ada laman admin di aplikasi.
-- Belum ada perintah untuk menghapus dokumen, membatalkan status Ditolak, mengubah tingkat akses dokumen, atau mengubah nama dan NIP akun.
+- Belum ada fitur untuk menghapus dokumen, membatalkan status Ditolak, mengubah tingkat akses dokumen, atau mengubah nama dan NIP akun.
 - Akun ditutup dengan mengganti password secara acak, bukan dengan status nonaktif.
-- Ekspor riwayat koreksi baru tersedia lewat API `GET /admin/koreksi/export` dengan akun admin.
+- Sesi akun yang ditutup tetap berlaku sampai habis, paling lama 60 menit.
 
 Rincian dan usulan perbaikannya ada di Kebijakan Data dan Keamanan, Bagian 10.

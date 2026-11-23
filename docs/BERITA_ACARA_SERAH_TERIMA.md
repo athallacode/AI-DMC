@@ -44,9 +44,9 @@ Selain berita acara ini, dokumen berikut ada di folder `docs/` dalam format Mark
 
 Berfungsi dan teruji di laptop pengembang:
 
-- Aplikasi web: masuk, unggah, klasifikasi AI lokal, Kotak Verifikasi, Arsip.
-- Perintah pengelola `kelola` untuk akun dan dokumen.
-- 23 tes backend dan 53 tes pipeline lulus.
+- Aplikasi web: masuk, unggah, klasifikasi AI lokal, Kotak Verifikasi, Arsip, dan laman Admin.
+- Pengelolaan akun dan dokumen lewat laman Admin atau perintah `kelola` di server.
+- 30 tes backend dan 53 tes pipeline lulus.
 - Pemasangan dependensi di Ubuntu 24.04, serta cadangan dan pemulihan database.
 
 Belum dikerjakan atau belum diuji:
