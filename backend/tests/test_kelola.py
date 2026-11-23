@@ -102,3 +102,16 @@ def test_daftar_gagal_dan_proses_ulang(k, capsys):
     assert 'Status sekarang: terverifikasi' in capsys.readouterr().out
     with sessions() as db:
         assert db.scalar(select(AuditLog).where(AuditLog.aksi == 'kelola_proses_ulang')).detail['oleh'] == 'A'
+
+
+def test_daftar_ditolak_dan_kembalikan(k, capsys):
+    client, sessions, users = k
+    identifier = upload(client, users[0], 'sk-tolak.pdf')['documents'][0]['id']
+    assert client.post(f'/documents/{identifier}/reject', headers=headers(users[0])).status_code == 200
+    assert kelola.main(['dokumen', 'ditolak']) == 0
+    assert identifier in capsys.readouterr().out
+    assert kelola.main(['dokumen', 'kembalikan', identifier, '--oleh', 'A']) == 0
+    with sessions() as db:
+        assert db.get(Document, uuid.UUID(identifier)).status == 'menunggu_verifikasi'
+    assert kelola.main(['dokumen', 'kembalikan', identifier, '--oleh', 'A']) == 1
+    assert 'Hanya dokumen ditolak' in capsys.readouterr().err

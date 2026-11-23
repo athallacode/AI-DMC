@@ -116,11 +116,30 @@ def daftar_akun(db) -> list[dict]:
     } for u in users]
 
 
-def dokumen_gagal(db) -> list[tuple[Document, str]]:
+def dokumen_berstatus(db, status) -> list[tuple[Document, str]]:
     return db.execute(
         select(Document, User.username).join(User, User.id == Document.owner_id)
-        .where(Document.status == 'gagal').order_by(Document.created_at)
+        .where(Document.status == status).order_by(Document.created_at)
     ).all()
+
+
+def dokumen_gagal(db) -> list[tuple[Document, str]]:
+    return dokumen_berstatus(db, 'gagal')
+
+
+def kembalikan_ditolak(db, doc: Document, oleh, **detail):
+    """Kembalikan dokumen Ditolak ke Kotak Verifikasi pengunggah, misalnya karena dosen salah tekan Tolak.
+
+    Konfirmasi dosen tertaut (selain pengunggah) direset: mereka baru bisa melihat lagi setelah
+    pengunggah menyetujui ulang, sama seperti dokumen baru.
+    """
+    if doc.status != 'ditolak':
+        raise Galat(f'Status dokumen {doc.status}. Hanya dokumen ditolak yang bisa dikembalikan.')
+    doc.status = 'menunggu_verifikasi'
+    for tautan in db.scalars(select(DocumentLecturer).where(DocumentLecturer.document_id == doc.id)):
+        if tautan.user_id != doc.owner_id:
+            tautan.dikonfirmasi = False
+    catat(db, doc.owner_id, 'batal_tolak', oleh, doc.id, **detail)
 
 
 def siapkan_proses_ulang(db, doc: Document, oleh, **detail):

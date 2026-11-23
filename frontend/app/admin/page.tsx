@@ -8,6 +8,7 @@ import { API, api, token, User } from '@/lib/api';
 type Akun = { id: string; username: string; nama: string; nip: string | null; peran: string; jumlah_dokumen: number; ditutup: boolean };
 type DokumenGagal = { id: string; nama_berkas: string; pengunggah: string; created_at: string; keterangan: string | null };
 type DokumenRingkas = { id: string; nama_berkas: string; pengunggah: string; status: string; created_at: string };
+type DokumenDitolak = { id: string; nama_berkas: string; pengunggah: string; created_at: string; ditolak_at: string };
 type Log = { created_at: string; username: string; nama: string; aksi: string; document_id: string | null; oleh: string | null };
 type Password = { judul: string; baris: { username: string; nama?: string; password: string }[]; dilewati?: string[] };
 type Tab = 'akun' | 'dokumen' | 'log';
@@ -16,6 +17,7 @@ const LABEL_AKSI: Record<string, string> = {
   login: 'Masuk', login_gagal: 'Gagal masuk', upload: 'Unggah dokumen', unduh: 'Unduh dokumen', approve: 'Setujui dokumen',
   reject: 'Tolak dokumen', koreksi: 'Koreksi dokumen', kelola_buat_akun: 'Akun dibuat', kelola_reset_password: 'Password direset',
   kelola_tutup_akun: 'Akun ditutup', kelola_proses_ulang: 'Dokumen diproses ulang', kelola_tautkan: 'Dosen ditautkan',
+  kelola_batal_tolak: 'Penolakan dibatalkan',
 };
 const waktu = (value: string) => new Intl.DateTimeFormat('id-ID', { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(value));
 
@@ -108,8 +110,14 @@ function PasswordModal({ data, onClose }: { data: Password; onClose: () => void 
 function DokumenTab({ setError, setNotice }: { setError: (v: string) => void; setNotice: (v: string) => void }) {
   const [gagal, setGagal] = useState<DokumenGagal[]>([]); const [loading, setLoading] = useState(true); const [busy, setBusy] = useState('');
   const [cari, setCari] = useState(''); const [hasil, setHasil] = useState<DokumenRingkas[] | null>(null); const [tautkan, setTautkan] = useState<DokumenRingkas | null>(null);
-  const muat = useCallback(() => { setLoading(true); api<DokumenGagal[]>('/admin/dokumen-gagal').then(setGagal).catch(e => setError(e.message)).finally(() => setLoading(false)); }, [setError]);
+  const [ditolak, setDitolak] = useState<DokumenDitolak[]>([]);
+  const muat = useCallback(() => { setLoading(true); Promise.all([api<DokumenGagal[]>('/admin/dokumen-gagal'), api<DokumenDitolak[]>('/admin/dokumen-ditolak')]).then(([g, d]) => { setGagal(g); setDitolak(d); }).catch(e => setError(e.message)).finally(() => setLoading(false)); }, [setError]);
   useEffect(() => { muat(); }, [muat]);
+  async function kembalikan(doc: DokumenDitolak) {
+    setBusy(doc.id); setError(''); setNotice('');
+    try { await api(`/admin/dokumen/${doc.id}/kembalikan`, { method: 'POST' }); setDitolak(items => items.filter(item => item.id !== doc.id)); setNotice(`${doc.nama_berkas} dikembalikan ke Kotak Verifikasi ${doc.pengunggah}.`); }
+    catch (e) { setError(e instanceof Error ? e.message : 'Dokumen belum berhasil dikembalikan.'); } finally { setBusy(''); }
+  }
   async function prosesUlang(doc: DokumenGagal) {
     setBusy(doc.id); setError(''); setNotice('');
     try { await api(`/admin/dokumen/${doc.id}/proses-ulang`, { method: 'POST' }); setGagal(items => items.filter(item => item.id !== doc.id)); setNotice(`${doc.nama_berkas} sedang diproses ulang. Hasilnya muncul di akun ${doc.pengunggah}.`); }
@@ -121,6 +129,11 @@ function DokumenTab({ setError, setNotice }: { setError: (v: string) => void; se
       {loading ? <p className="muted">Memuat…</p> : gagal.length === 0 ? <p className="muted">Tidak ada dokumen gagal.</p> :
         <ul className="card admin-list">{gagal.map(doc => <li key={doc.id}><div className="list-text"><strong>{doc.nama_berkas}</strong><span className="meta">{doc.pengunggah} · {waktu(doc.created_at)}</span>{doc.keterangan && <span className="meta">{doc.keterangan}</span>}</div>
           <div className="admin-row-end"><button className="secondary" disabled={busy === doc.id} onClick={() => void prosesUlang(doc)}>{busy === doc.id ? 'Memproses…' : 'Proses ulang'}</button></div></li>)}</ul>}</section>
+    <section className="admin-section" aria-labelledby="judul-ditolak"><div className="section-heading"><h2 id="judul-ditolak">Dokumen ditolak</h2></div>
+      <p className="meta">Kalau dosen salah menekan Tolak, kembalikan dokumennya ke Kotak Verifikasi supaya bisa diperiksa ulang. Dosen tertaut baru bisa melihatnya lagi setelah pengunggah menyetujui.</p>
+      {loading ? <p className="muted">Memuat…</p> : ditolak.length === 0 ? <p className="muted">Tidak ada dokumen ditolak.</p> :
+        <ul className="card admin-list">{ditolak.map(doc => <li key={doc.id}><div className="list-text"><strong>{doc.nama_berkas}</strong><span className="meta">{doc.pengunggah} · ditolak {waktu(doc.ditolak_at)}</span></div>
+          <div className="admin-row-end"><button className="secondary" disabled={busy === doc.id} onClick={() => void kembalikan(doc)}>{busy === doc.id ? 'Memproses…' : 'Kembalikan ke Kotak Verifikasi'}</button></div></li>)}</ul>}</section>
     <section className="admin-section" aria-labelledby="judul-tautkan"><div className="section-heading"><h2 id="judul-tautkan">SK bersama</h2></div>
       <p className="meta">Kalau dosen mendapat pesan &quot;Sudah pernah diunggah&quot; untuk SK yang sudah diunggah dosen lain, cari dokumennya lalu tautkan dosen itu. Dosen yang ditautkan bisa melihat dan mengunduh, tetapi tidak bisa mengubah.</p>
       <form className="admin-find" onSubmit={cariDokumen}><label className="admin-search">Nama berkas<span className="search-wrap"><Search size={16} aria-hidden="true" /><input type="search" value={cari} onChange={e => setCari(e.target.value)} placeholder="Minimal 3 huruf, misalnya pengajaran" minLength={3} {...required} /></span></label><button className="neutral">Cari</button></form>

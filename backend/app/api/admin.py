@@ -115,6 +115,22 @@ def dokumen_gagal(user: User = Depends(admin_saja), db: Session = Depends(get_db
     } for doc, username in admin.dokumen_gagal(db)])
 
 
+@router.get('/dokumen-ditolak')
+def dokumen_ditolak(user: User = Depends(admin_saja), db: Session = Depends(get_db)):
+    return jsonable_encoder([{
+        'id': doc.id, 'nama_berkas': doc.nama_berkas, 'pengunggah': username,
+        'created_at': doc.created_at, 'ditolak_at': doc.updated_at,
+    } for doc, username in admin.dokumen_berstatus(db, 'ditolak')])
+
+
+@router.post('/dokumen/{document_id}/kembalikan')
+def kembalikan(document_id: str, user: User = Depends(admin_saja), db: Session = Depends(get_db)):
+    doc = galat_400(lambda: admin.cari_dokumen(db, document_id))
+    galat_400(lambda: admin.kembalikan_ditolak(db, doc, pelaku(user), via='laman_admin'))
+    db.commit()
+    return {'id': str(doc.id), 'status': doc.status}
+
+
 @router.get('/dokumen')
 def cari_dokumen(cari: str = Query(min_length=3, max_length=100), user: User = Depends(admin_saja), db: Session = Depends(get_db)):
     """Cari dokumen berdasarkan nama berkas, misalnya untuk menautkan SK bersama. Hanya data ringkas."""

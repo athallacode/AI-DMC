@@ -104,6 +104,22 @@ def dokumen_proses_ulang(args):
             print('Masih gagal. Cek log backend untuk penyebabnya.')
 
 
+def dokumen_ditolak(args):
+    with SessionLocal() as db:
+        docs = admin.dokumen_berstatus(db, 'ditolak')
+        for doc, username in docs:
+            print(f'{doc.id}  ditolak {doc.updated_at:%Y-%m-%d %H:%M}  {username:<15} {doc.nama_berkas}')
+        print(f'\n{len(docs)} dokumen ditolak.')
+
+
+def dokumen_kembalikan(args):
+    with SessionLocal() as db:
+        doc = admin.cari_dokumen(db, args.kode)
+        admin.kembalikan_ditolak(db, doc, args.oleh, via='perintah')
+        db.commit()
+    print(f'Dokumen {args.kode} dikembalikan ke Kotak Verifikasi pengunggah.')
+
+
 def dokumen_tautkan(args):
     with SessionLocal() as db:
         admin.tautkan(db, admin.cari_dokumen(db, args.kode), admin.cari_akun(db, args.username), args.peran, args.oleh, via='perintah')
@@ -142,6 +158,10 @@ def susun_parser() -> argparse.ArgumentParser:
     sp = dok.add_parser('proses-ulang', help='Proses ulang dokumen gagal')
     sp.add_argument('kode', help='Kode dokumen (lihat perintah gagal)')
     oleh(sp); sp.set_defaults(fungsi=dokumen_proses_ulang)
+    dok.add_parser('ditolak', help='Tampilkan dokumen berstatus ditolak').set_defaults(fungsi=dokumen_ditolak)
+    sp = dok.add_parser('kembalikan', help='Kembalikan dokumen ditolak ke Kotak Verifikasi pengunggah')
+    sp.add_argument('kode', help='Kode dokumen (lihat perintah ditolak)')
+    oleh(sp); sp.set_defaults(fungsi=dokumen_kembalikan)
     sp = dok.add_parser('tautkan', help='Tautkan dosen lain ke dokumen (misal SK bersama)')
     sp.add_argument('kode')
     sp.add_argument('username')

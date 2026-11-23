@@ -136,3 +136,38 @@ def test_cari_dokumen_berdasarkan_nama(context):
     # Karakter wildcard SQL diperlakukan sebagai huruf biasa.
     assert client.get('/admin/dokumen?cari=%25%25%25', headers=admin).json() == []
     assert client.get('/admin/dokumen?cari=sk', headers=admin).status_code == 422
+
+
+def test_kembalikan_dokumen_ditolak(context):
+    client, sessions, users = context
+    admin = headers(users[2])
+    dosen1, dosen2 = headers(users[0]), headers(users[1])
+    identifier = upload(client, users[0], 'sk-tinggi.pdf')['documents'][0]['id']
+    path = '/documents/' + identifier
+    # SK bersama yang sudah bisa dilihat dosen2, lalu ditolak dosen1 karena salah tekan.
+    client.post(f'/admin/dokumen/{identifier}/tautkan', headers=admin, json={'username': 'dosen2'})
+    assert client.get(path, headers=dosen2).status_code == 200
+    assert client.post(path + '/reject', headers=dosen1).status_code == 200
+    assert client.post(path + '/approve', headers=dosen1).status_code == 409
+
+    assert client.get('/admin/dokumen-ditolak', headers=dosen1).status_code == 403
+    assert client.post(f'/admin/dokumen/{identifier}/kembalikan', headers=dosen1).status_code == 403
+    ditolak = client.get('/admin/dokumen-ditolak', headers=admin).json()
+    assert [d['id'] for d in ditolak] == [identifier] and ditolak[0]['pengunggah'] == 'dosen1'
+
+    hasil = client.post(f'/admin/dokumen/{identifier}/kembalikan', headers=admin)
+    assert hasil.status_code == 200 and hasil.json()['status'] == 'menunggu_verifikasi'
+    assert client.get('/admin/dokumen-ditolak', headers=admin).json() == []
+    # Muncul lagi di Kotak Verifikasi pengunggah.
+    menunggu = client.get('/documents?status=menunggu_verifikasi', headers=dosen1).json()
+    assert identifier in [d['id'] for d in menunggu]
+    # Dosen tertaut baru bisa melihat lagi setelah pengunggah menyetujui ulang.
+    assert client.get(path, headers=dosen2).status_code == 404
+    assert client.post(path + '/approve', headers=dosen1).status_code == 200
+    assert client.get(path, headers=dosen2).status_code == 200
+    # Dokumen yang tidak berstatus ditolak tidak bisa dikembalikan.
+    tolak_lagi = client.post(f'/admin/dokumen/{identifier}/kembalikan', headers=admin)
+    assert tolak_lagi.status_code == 400 and 'Hanya dokumen ditolak' in tolak_lagi.json()['detail']
+    with sessions() as db:
+        log = db.scalar(select(AuditLog).where(AuditLog.aksi == 'kelola_batal_tolak'))
+        assert str(log.document_id) == identifier and log.detail['oleh'] == 'admin (admin)'
