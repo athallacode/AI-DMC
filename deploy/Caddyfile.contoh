@@ -1,0 +1,33 @@
+# Contoh konfigurasi Caddy untuk AI-DMC. Salin ke /etc/caddy/Caddyfile, ganti nama domain,
+# lalu: sudo systemctl reload caddy
+#
+# Satu domain untuk semuanya:
+#   https://<domain>/      -> frontend (Docker, port 3000)
+#   https://<domain>/api/  -> backend (systemd, port 8000), awalan /api dibuang
+# Di .env: NEXT_PUBLIC_API_URL=https://<domain>/api dan CORS_ORIGINS=https://<domain>
+#
+# Sertifikat: kalau domain bisa dijangkau internet, Caddy mengurus sertifikat otomatis.
+# Untuk domain internal kampus, pakai sertifikat dari kampus:
+#   tls /etc/caddy/sertifikat.pem /etc/caddy/kunci.pem
+
+ai-dmc.contoh.ac.id {
+	# 20 berkas x 20 MB per unggahan, ditambah sedikit ruang.
+	request_body {
+		max_size 420MB
+	}
+
+	handle_path /api/* {
+		reverse_proxy 127.0.0.1:8000
+	}
+
+	handle {
+		reverse_proxy 127.0.0.1:3000
+	}
+
+	header {
+		Strict-Transport-Security "max-age=31536000"
+		X-Content-Type-Options nosniff
+		Referrer-Policy same-origin
+		-Server
+	}
+}

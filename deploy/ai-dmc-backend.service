@@ -1,0 +1,31 @@
+# Layanan systemd backend AI-DMC (FastAPI + pipeline AI), dijalankan langsung di Ubuntu.
+# Dipasang oleh deploy/pasang-backend.sh. Path /opt/ai-dmc diganti otomatis sesuai lokasi repo.
+[Unit]
+Description=AI-DMC backend (FastAPI + pipeline AI)
+After=network-online.target docker.service ollama.service
+Wants=network-online.target
+# Database di Docker bisa belum siap saat server baru menyala: terus coba ulang.
+StartLimitIntervalSec=0
+
+[Service]
+Type=simple
+User=aidmc
+Group=aidmc
+WorkingDirectory=/opt/ai-dmc/backend
+Environment=PYTHONPATH=/opt/ai-dmc
+Environment=PYTHONUNBUFFERED=1
+Environment=PADDLE_PDX_DISABLE_MODEL_SOURCE_CHECK=True
+# Pengaturan lain dibaca aplikasi dari /opt/ai-dmc/.env
+ExecStartPre=/opt/ai-dmc/.venv/bin/python -m alembic upgrade head
+# Satu worker: antrean proses dokumen belum permanen (lihat Panduan Instalasi Bagian 9).
+ExecStart=/opt/ai-dmc/.venv/bin/python -m uvicorn app.main:app --host 127.0.0.1 --port 8000 --workers 1
+Restart=on-failure
+RestartSec=10
+TimeoutStopSec=30
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=full
+ProtectHome=true
+
+[Install]
+WantedBy=multi-user.target

@@ -16,7 +16,12 @@ services:
       retries: 12
     restart: unless-stopped
 
+  # Backend standar berjalan langsung di Ubuntu lewat systemd (deploy/pasang-backend.sh) supaya
+  # PaddleOCR dan Ollama memakai GPU host. Service ini hanya dinyalakan kalau diminta:
+  #   docker compose --profile backend-docker up -d
+  # Image ini belum memuat PaddleOCR, jadi dokumen scan dan foto akan gagal.
   backend:
+    profiles: [backend-docker]
     build:
       context: .
       dockerfile: backend/Dockerfile
@@ -39,8 +44,6 @@ services:
         NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:8000}
     ports:
       - '127.0.0.1:${FRONTEND_PORT:-3000}:3000'
-    depends_on:
-      - backend
     restart: unless-stopped
 
 volumes:
