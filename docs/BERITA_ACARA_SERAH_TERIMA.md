@@ -26,7 +26,7 @@ Catatan: per 23 November 2026, branch ini belum masuk repositori di atas karena 
 
 ## 2. Dokumen
 
-Dokumen berikut ada di folder `docs/` dalam format Markdown. Berkas PDF tidak tersimpan di repositori, jadi diserahkan sebagai berkas terpisah.
+Selain berita acara ini, dokumen berikut ada di folder `docs/` dalam format Markdown. Berkas PDF tidak tersimpan di repositori, jadi diserahkan sebagai berkas terpisah.
 
 | No | Dokumen | Berkas PDF | Halaman |
 |---|---|---|---|
@@ -38,6 +38,7 @@ Dokumen berikut ada di folder `docs/` dalam format Markdown. Berkas PDF tidak te
 | 6 | Panduan Instalasi dan Operasional | Panduan-Instalasi-AI-DMC.pdf | 11 |
 | 7 | Arsitektur AI-DMC | Arsitektur-AI-DMC.pdf | 8 |
 | 8 | Buku Pengembangan | Buku-Pengembangan-AI-DMC.pdf | 10 |
+| 9 | Panduan Ringkas Dosen | Panduan-Ringkas-Dosen-AI-DMC.pdf | 1 |
 
 ## 3. Kondisi saat diserahkan
 

@@ -174,6 +174,7 @@ Daftar lengkap pekerjaan teknis yang belum selesai ada di Buku Pengembangan Bagi
 | Dokumen | Untuk |
 |---|---|
 | Panduan Dosen | Dosen pengguna aplikasi |
+| Panduan Ringkas Dosen (1 halaman) | Dibagikan atau ditempel saat sosialisasi |
 | Panduan Admin dan Pengelola | Admin CoE dan pengelola server |
 | Kebijakan Data dan Keamanan | Admin CoE, pimpinan prodi |
 | Kebutuhan Server | Pengadaan dan pengelola jaringan |
