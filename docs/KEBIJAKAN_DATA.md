@@ -77,6 +77,7 @@ Aksi yang dicatat, beserta pelaku dan waktunya:
 | Aksi | Keterangan |
 |---|---|
 | login | Masuk berhasil |
+| login_gagal | Password salah untuk akun yang terdaftar |
 | upload | Unggah dokumen, beserta nama berkas |
 | unduh | Membuka atau mengunduh berkas |
 | approve | Menyetujui hasil AI |
@@ -134,7 +135,7 @@ Temuan dari kode per 22 November 2026, diurutkan dari yang paling penting. Dua c
 | No | Hal | Dampak | Usulan |
 |---|---|---|---|
 | 1 | Akun tidak punya status aktif atau nonaktif | Akun ditutup dengan mengganti password secara acak (`kelola akun tutup`). Sesi yang sedang terbuka tetap berlaku sampai habis | Tambah status aktif pada akun |
-| 2 | Tidak ada batas percobaan login, dan login gagal tidak dicatat | Password bisa ditebak berulang tanpa jejak | Batasi percobaan per akun dan per alamat, catat login gagal |
+| 2 | Batas percobaan login hanya per akun (5 kali gagal dalam 15 menit, akun terkunci 15 menit). Login gagal sudah dicatat di log audit (`login_gagal`) | Orang lain bisa sengaja mengunci akun dosen selama 15 menit | Tambah batas per alamat IP setelah reverse proxy meneruskan IP asli |
 | 3 | Belum ada skrip cadangan | Data hilang kalau disk rusak | Pasang skrip cadangan harian sebelum dipakai dosen |
 | 4 | Berkas di folder `storage/` tidak dienkripsi | Siapa pun yang memegang disk atau cadangan bisa membaca dokumen | Enkripsi disk server dan disk cadangan |
 | 5 | Belum ada fitur hapus dan masa simpan | Dokumen yang salah unggah tersimpan selamanya | Tetapkan masa simpan, buat prosedur hapus oleh pengelola |

@@ -30,14 +30,14 @@ Selain berita acara ini, dokumen berikut ada di folder `docs/` dalam format Mark
 
 | No | Dokumen | Berkas PDF | Halaman |
 |---|---|---|---|
-| 1 | Laporan Akhir | Laporan-Akhir-AI-DMC.pdf | 7 |
+| 1 | Laporan Akhir | Laporan-Akhir-AI-DMC.pdf | 8 |
 | 2 | Panduan Dosen | Panduan-Dosen-AI-DMC.pdf | 16 |
 | 3 | Panduan Admin dan Pengelola | Panduan-Admin-AI-DMC.pdf | 6 |
 | 4 | Kebijakan Data dan Keamanan | Kebijakan-Data-AI-DMC.pdf | 7 |
 | 5 | Kebutuhan Server | Kebutuhan-Server-AI-DMC.pdf | 5 |
 | 6 | Panduan Instalasi dan Operasional | Panduan-Instalasi-AI-DMC.pdf | 11 |
 | 7 | Arsitektur AI-DMC | Arsitektur-AI-DMC.pdf | 8 |
-| 8 | Buku Pengembangan | Buku-Pengembangan-AI-DMC.pdf | 10 |
+| 8 | Buku Pengembangan | Buku-Pengembangan-AI-DMC.pdf | 11 |
 | 9 | Panduan Ringkas Dosen | Panduan-Ringkas-Dosen-AI-DMC.pdf | 1 |
 
 ## 3. Kondisi saat diserahkan
@@ -46,7 +46,7 @@ Berfungsi dan teruji di laptop pengembang:
 
 - Aplikasi web: masuk, unggah, klasifikasi AI lokal, Kotak Verifikasi, Arsip.
 - Perintah pengelola `kelola` untuk akun dan dokumen.
-- 21 tes backend dan 36 tes pipeline lulus.
+- 23 tes backend dan 53 tes pipeline lulus.
 - Pemasangan dependensi di Ubuntu 24.04, serta cadangan dan pemulihan database.
 
 Belum dikerjakan atau belum diuji:

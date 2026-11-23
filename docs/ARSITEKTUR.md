@@ -76,7 +76,8 @@ stateDiagram-v2
   [*] --> diproses: unggah
   diproses --> terverifikasi: skor >= 0,85
   diproses --> menunggu_verifikasi: skor < 0,85
-  diproses --> gagal: pipeline error / layanan restart
+  diproses --> diproses: restart, dilanjutkan
+  diproses --> gagal: pipeline error / terputus 3 kali
   menunggu_verifikasi --> terverifikasi: Setujui / Koreksi
   menunggu_verifikasi --> ditolak: Tolak
   terverifikasi --> terverifikasi: Koreksi / Sudah benar

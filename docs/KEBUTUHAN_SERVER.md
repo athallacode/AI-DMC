@@ -79,7 +79,7 @@ Belum diuji, baru bisa setelah server ada:
 3. Caddy dan HTTPS dengan domain kampus.
 4. Seluruh alur unggah sampai verifikasi lewat domain.
 
-Batasan yang tetap ada: **antrean belum permanen.** Backend memakai 1 worker dan background task. Restart saat ada dokumen diproses membuat dokumen itu berstatus gagal.
+Dokumen yang sedang diproses saat backend restart dilanjutkan otomatis setelah backend menyala lagi. Dokumen diproses satu per satu.
 
 ## 7. Urutan deploy
 
@@ -100,4 +100,4 @@ Langkah lengkap ada di Panduan Instalasi dan Operasional, Bagian 4. Ringkasnya:
 
 - Backup harian dengan `deploy/cadangan.sh`: database dan `storage/`, disimpan 7 hari terakhir.
 - Pantau ruang disk, dokumen berstatus gagal, dan waktu proses per dokumen.
-- Sebelum restart atau update, pastikan tidak ada dokumen berstatus "diproses".
+- Restart dan update sebaiknya di luar jam kerja. Dokumen yang sedang diproses dilanjutkan otomatis setelah backend menyala lagi.

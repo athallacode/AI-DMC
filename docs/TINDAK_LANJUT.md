@@ -18,11 +18,11 @@ Opsi percepatan (ukur ulang dengan data uji tiap perubahan, catat detik yang dih
 2. **Dokumen gagal tidak bisa diproses ulang.** Cek duplikat hash tidak melihat status, jadi dokumen `gagal` buntu. Usulan sesuai kontrak (tanpa endpoint baru): unggah ulang berkas yang statusnya `gagal` memproses ulang dokumen lama. Dokumen `ditolak` tetap final sesuai rancangan.
 3. **Pesan duplikat** di laman Unggah belum memakai `document_id` untuk tautan ke dokumen (P2-05).
 4. **Sesi habis** (JWT 60 menit) langsung pindah ke login dan isian koreksi hilang. Alur login ulang tanpa kehilangan isian sempat ditunda.
-5. **Login belum dibatasi** jumlah percobaannya.
+5. Selesai 23 November 2026: login dibatasi 5 kali gagal per username dalam 15 menit.
 6. Prioritas rendah: laman Verifikasi dan "Baru diarsipkan AI" mengambil detail dokumen satu per satu; proses AI tanpa antrean terpisah sehingga unggahan banyak berkas saling memperlambat.
 7. **Panduan dosen** (`docs/PANDUAN_DOSEN.md`) masih menulis bahwa menutup laman saat aksi tertunda membatalkan aksi; sekarang aksi justru langsung dikirim.
 
-Catatan: restart backend saat ada dokumen berstatus `diproses` membuat dokumen itu `gagal`. Cek status tepat sebelum restart.
+Catatan: sejak 23 November 2026, dokumen yang terputus restart dilanjutkan otomatis saat backend start.
 
 ## 3. Akurasi AI
 

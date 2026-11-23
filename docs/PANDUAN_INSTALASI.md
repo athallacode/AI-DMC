@@ -256,13 +256,13 @@ Semua layanan menyala sendiri saat server dinyalakan ulang: backend dan Ollama l
 
 ### Menghentikan dan menyalakan
 
-1. Pastikan tidak ada dokumen yang sedang diproses. Dokumen yang terputus saat restart berubah menjadi gagal.
+1. Dokumen yang sedang diproses saat backend berhenti akan dilanjutkan otomatis setelah backend menyala lagi. Untuk melihat jumlahnya:
 
    ```
    docker compose exec db psql -U ai_dmc -d ai_dmc -c "SELECT count(*) FROM documents WHERE status = 'diproses'"
    ```
 
-2. Kalau hasilnya 0, hentikan backend dulu, baru yang lain. Nyalakan dengan urutan terbalik:
+2. Hentikan backend dulu, baru yang lain. Nyalakan dengan urutan terbalik:
 
    ```
    sudo systemctl stop ai-dmc-backend
@@ -273,12 +273,12 @@ Semua layanan menyala sendiri saat server dinyalakan ulang: backend dan Ollama l
 
    `docker compose down` tidak menghapus database dan berkas. **Jangan pakai `docker compose down -v`**, karena `-v` menghapus volume database.
 
-Kalau ada dokumen yang terlanjur gagal karena restart, proses ulang dengan `sudo kelola dokumen proses-ulang` (Panduan Admin Bagian 3).
+Dokumen yang tiga kali terputus ditandai gagal. Proses ulang dengan `sudo kelola dokumen proses-ulang` (Panduan Admin Bagian 3).
 
 ### Memperbarui aplikasi
 
 1. Cadangkan dulu (Bagian 6).
-2. Pastikan tidak ada dokumen diproses (lihat di atas). Lakukan di luar jam kerja.
+2. Lakukan di luar jam kerja. Dokumen yang sedang diproses dilanjutkan setelah backend menyala lagi.
 3. Ambil versi baru, pasang ulang backend, bangun ulang frontend, lalu periksa:
 
    ```
@@ -357,7 +357,8 @@ Uji pemulihan ini sekali sebelum go-live, lalu setiap 6 bulan.
 | Semua dokumen baru gagal, keterangan "Model AI tidak bisa dihubungi" | Ollama mati atau tidak terjangkau | `ollama ps`, `systemctl status ollama`, cek `OLLAMA_HOST` berupa URL lengkap |
 | Hanya dokumen scan atau foto yang gagal, keterangan "OCR tidak tersedia di server" | PaddleOCR tidak terpasang, kurang pustaka sistem, atau model gagal diunduh | `journalctl -u ai-dmc-backend -n 200`, lalu jalankan ulang `pasang-backend.sh` |
 | Satu dokumen butuh lebih dari 5 menit | Model LLM tidak muat di GPU, atau PaddlePaddle terpasang versi CPU | `ollama ps` harus 100% GPU. Ulangi `pasang-backend.sh` dengan `CUDA=` yang benar dan pastikan uji PaddlePaddle menyebut GPU |
-| Banyak dokumen gagal "terhenti saat layanan dimulai ulang" | Backend di-restart saat memproses | Proses ulang lewat `kelola`. Lain kali cek status diproses sebelum restart |
+| Dokumen gagal "terhenti beberapa kali saat layanan dimulai ulang" | Dokumen tiga kali terputus restart, atau membuat backend berhenti | Proses ulang sekali lewat `kelola`. Kalau gagal lagi, kirim potongan log ke tim pengembang |
+| Dosen melapor "Terlalu banyak percobaan masuk yang gagal" | 5 kali salah password dalam 15 menit | Tunggu 15 menit, atau reset password (Panduan Admin) |
 | Backend tidak mau start | Database belum siap, `.env` salah, atau `JWT_SECRET` kurang dari 32 karakter | `journalctl -u ai-dmc-backend -n 100`. Backend mencoba ulang sendiri setiap 10 detik |
 | Galat "Mock tidak diizinkan pada production" | `PIPELINE_MODE=mock` dengan `APP_ENVIRONMENT=production` | Ubah ke `PIPELINE_MODE=real` |
 | Frontend tampil tetapi gagal masuk dengan pesan jaringan | `NEXT_PUBLIC_API_URL` atau `CORS_ORIGINS` tidak cocok dengan domain | Samakan dengan domain, bangun ulang frontend, restart backend |
@@ -393,7 +394,6 @@ Belum diuji, baru bisa setelah server tersedia:
 
 Batasan yang tetap ada:
 
-- **Antrean belum permanen.** Restart saat ada dokumen diproses membuat dokumen itu gagal.
 - **Backend di Docker belum lengkap.** Service `backend` di `docker-compose.yml` hanya menyala dengan `--profile backend-docker` dan image-nya belum memuat PaddleOCR. Jalur ini tidak dipakai untuk server.
 
 Setelah butir "Belum diuji" selesai di server, perbarui bagian ini.

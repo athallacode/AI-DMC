@@ -38,7 +38,7 @@ Acuan rancangan: DOK-CoE-AIIS-DMC-001 v0.1 (Rancangan Sistem AI-DMC).
 | Laman Arsip dengan filter kategori, status, tahun | Selesai |
 | Koreksi dosen disimpan sebagai bahan perbaikan AI | Selesai. Riwayat bisa diekspor admin |
 
-Tambahan di luar daftar MVP: perintah pengelola `app.kelola` (akun, dokumen gagal, SK bersama), log audit yang tidak bisa diubah, pertahanan prompt injection, tampilan HP, dan berkas deploy server.
+Tambahan di luar daftar MVP: perintah pengelola `app.kelola` (akun, dokumen gagal, SK bersama), log audit yang tidak bisa diubah, pertahanan prompt injection, tampilan HP, berkas deploy server, antrean pemrosesan yang dilanjutkan otomatis setelah restart, batas percobaan login, dan penyaring nomor serta tanggal dokumen yang tidak tertulis di teks.
 
 Sesuai kesepakatan, yang tidak dikerjakan di tahap ini: SSO kampus, pencarian bahasa alami (Tanya Arsip), generator paket jabatan fungsional dan akreditasi, dasbor Ketua CoE, deteksi versi dokumen, dan antrean Celery dengan Redis.
 
@@ -129,8 +129,8 @@ Aturan lengkap, hak dosen, dan daftar celah yang belum ditutup ada di Kebijakan 
 
 | Pengujian | Hasil |
 |---|---|
-| Tes otomatis backend | 21 tes lulus: alur unggah sampai verifikasi, hak akses antardosen, duplikat, validasi berkas, ambang skor, riwayat koreksi, log audit, perintah pengelola |
-| Tes otomatis pipeline | 36 tes lulus: ekstraksi, klasifikasi, voting, penyaring prompt injection, pembersihan metadata |
+| Tes otomatis backend | 23 tes lulus: alur unggah sampai verifikasi, hak akses antardosen, duplikat, validasi berkas, ambang skor, riwayat koreksi, log audit, perintah pengelola |
+| Tes otomatis pipeline | 53 tes lulus: ekstraksi, klasifikasi, voting, penyaring prompt injection, pembersihan metadata |
 | Uji ujung ke ujung | PDF digital, PDF scan, foto, dan DOCX lewat aplikasi sampai status akhir |
 | Uji tampilan | Laman Unggah, Kotak Verifikasi, dan Arsip pada lebar 375 px dan 1280 px tanpa tampilan terpotong (UI V2 Review) |
 | Uji pemasangan server | Dependensi terpasang di Ubuntu 24.04 tanpa konflik, aplikasi dapat dimuat |
@@ -162,8 +162,8 @@ Urut dari yang paling mendesak:
 1. **Sediakan server** sesuai Kebutuhan Server (GPU NVIDIA 12 GB, RAM 32 GB), lalu deploy mengikuti Panduan Instalasi.
 2. **Putuskan taksonomi** untuk SK pembimbing TA dan berita acara sidang.
 3. **Uji coba dengan 3 sampai 5 dosen** selama dua minggu, sambil mengumpulkan dokumen asli berlabel. Target 100 dokumen untuk evaluasi ulang, dengan sebagian disisihkan sebagai set uji yang tidak dipakai menyetel prompt.
-4. **Buat antrean pemrosesan permanen** supaya restart server tidak membuat dokumen gagal.
-5. **Lengkapi fitur admin:** status akun nonaktif, batas percobaan login, laman admin, dan kebijakan hapus dokumen.
+4. **Lengkapi fitur admin:** status akun nonaktif, laman admin, dan kebijakan hapus dokumen.
+5. **Tambah batas login per alamat IP** setelah reverse proxy meneruskan IP asli.
 6. **Manfaatkan koreksi dosen** sebagai contoh di prompt (few-shot), lalu fine-tune setelah data cukup.
 7. Setelah stabil, lanjut ke fitur fase berikutnya: Tanya Arsip, generator paket jabatan fungsional dan akreditasi, dan SSO kampus.
 

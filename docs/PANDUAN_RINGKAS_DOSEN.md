@@ -42,6 +42,7 @@ Kategori: **PND** Pendidikan, **PNL** Penelitian, **PKM** Pengabdian kepada Masy
 | "Sudah pernah diunggah", padahal belum | Mungkin SK bersama yang sudah diunggah dosen lain. Minta pengelola menautkannya ke akun Anda |
 | Salah menolak dokumen | Hubungi pengelola |
 | Tiba-tiba kembali ke laman Masuk | Sesi habis setelah 60 menit. Masuk lagi, dokumen tidak hilang |
+| "Terlalu banyak percobaan masuk yang gagal" | Akun dikunci 15 menit setelah 5 kali salah password. Tunggu, lalu coba lagi |
 | Lupa password | Hubungi pengelola secara langsung atau lewat email kampus |
 
 ## Privasi

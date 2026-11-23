@@ -198,7 +198,7 @@ Daftar jenis lengkap tersedia di menu pilihan form koreksi. Pembagian kategori m
 ## 9. Pertanyaan yang sering muncul
 
 **Dokumen saya berstatus Gagal. Apa yang harus dilakukan?**
-Biasanya karena berkas rusak, terkunci password, tidak ada teks yang terbaca (misalnya scan terlalu buram), atau server sedang dimulai ulang. Hubungi pengelola dengan menyebut nama berkas dan waktu unggah. Mengunggah ulang berkas yang sama saat ini ditolak dengan keterangan "Sudah pernah diunggah", jadi pengelola yang akan memproses ulang.
+Biasanya karena berkas rusak, terkunci password, atau tidak ada teks yang terbaca (misalnya scan terlalu buram). Hubungi pengelola dengan menyebut nama berkas dan waktu unggah. Mengunggah ulang berkas yang sama saat ini ditolak dengan keterangan "Sudah pernah diunggah", jadi pengelola yang akan memproses ulang.
 
 **Muncul "Sudah pernah diunggah", padahal saya belum pernah mengunggahnya.**
 Berkas yang persis sama mungkin sudah diunggah dosen lain, misalnya SK bersama. Hubungi pengelola agar dokumen itu ditautkan ke akun Anda.
@@ -216,6 +216,9 @@ Sekitar 1 menit per dokumen, lebih lama untuk scan atau foto, dan lebih lama lag
 Bisa. Menu ada di bagian bawah layar, dan tombol Pindai dengan kamera bisa memotret dokumen kertas langsung.
 
 ![Kotak Verifikasi di HP](gambar/panduan/07-hp-verifikasi.png)
+
+**Muncul "Terlalu banyak percobaan masuk yang gagal".**
+Setelah 5 kali salah password, akun dikunci 15 menit untuk keamanan. Tunggu 15 menit lalu coba lagi, atau hubungi pengelola kalau lupa password.
 
 **Tiba-tiba kembali ke laman Masuk.**
 Sesi berakhir setelah 60 menit atau setelah tab ditutup. Masuk kembali. Dokumen yang sedang diproses tidak hilang.

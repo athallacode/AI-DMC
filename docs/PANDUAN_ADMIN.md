@@ -115,7 +115,7 @@ Tampil kode dokumen, waktu unggah, pengunggah, nama berkas, dan penyebab singkat
 
 | Keterangan | Artinya | Tindakan |
 |---|---|---|
-| Pemrosesan terhenti saat layanan dimulai ulang | Server atau backend di-restart saat dokumen diproses | Proses ulang |
+| Pemrosesan terhenti beberapa kali saat layanan dimulai ulang | Dokumen tiga kali terputus restart atau membuat backend berhenti | Proses ulang sekali. Kalau gagal lagi, cek log backend dan teruskan ke tim pengembang |
 | Pemrosesan gagal | Berkas rusak, terkunci password, tidak ada teks terbaca, atau layanan AI mati | Cek Ollama jalan (`ollama ps`), lalu proses ulang. Kalau tetap gagal, minta dosen mengirim berkas yang lebih jelas |
 
 ### Memproses ulang dokumen gagal
@@ -149,6 +149,7 @@ Dosen yang NIP-nya tertulis di dokumen sebenarnya tertaut otomatis setelah pengu
 |---|---|
 | Belum punya akun | Buat akun (Bagian 2) |
 | Lupa password | `akun reset-password` |
+| "Terlalu banyak percobaan masuk yang gagal" | Akun terkunci 15 menit setelah 5 kali salah password. Minta dosen menunggu. Kalau dosen yakin bukan dia yang mencoba, cek `login_gagal` di log audit dan reset password-nya |
 | Dokumen berstatus Gagal | `dokumen proses-ulang` |
 | "Sudah pernah diunggah" padahal belum | Cari pemilik dokumen, lalu `dokumen tautkan` |
 | Salah menolak dokumen | Belum ada perintah. Catat kode dokumennya dan teruskan ke Admin CoE; perubahan status lewat database hanya dengan persetujuan Admin CoE |
@@ -170,13 +171,11 @@ Dosen yang NIP-nya tertulis di dokumen sebenarnya tertaut otomatis setelah pengu
 
 **Sebelum restart atau update**
 
-Pastikan tidak ada dokumen yang sedang diproses, supaya tidak berubah menjadi gagal:
+Dokumen yang sedang diproses saat backend berhenti akan dilanjutkan otomatis setelah backend menyala lagi, jadi tidak perlu menunggu antrean kosong. Tetap lakukan restart di luar jam kerja supaya dosen tidak menunggu lama. Untuk melihat jumlah dokumen yang masih diproses:
 
 ```
 docker compose exec db psql -U <POSTGRES_USER> -d <POSTGRES_DB> -c "SELECT count(*) FROM documents WHERE status = 'diproses'"
 ```
-
-Kalau hasilnya bukan 0, tunggu sebentar lalu cek lagi. Restart di luar jam kerja.
 
 ## 6. Pemeriksaan lewat database (hanya baca)
 

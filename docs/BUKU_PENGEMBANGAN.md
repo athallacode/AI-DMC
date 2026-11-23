@@ -47,13 +47,13 @@ Cara menyiapkan laptop pengembang ada di Panduan Instalasi Bagian 3. Dokumen ruj
 
 1. Frontend mengirim berkas ke `POST /documents` (maksimal 20 berkas, 20 MB per berkas).
 2. Backend (`api/documents.py`) memeriksa tanda tangan berkas (PDF, PNG, JPG, DOCX), menghitung SHA-256, dan menolak duplikat. Berkas disimpan di `storage/` (`services/storage.py`) dan dicatat dengan status `diproses`.
-3. Backend menjadwalkan `services/pipeline.process_document()` sebagai *background task* FastAPI. Tidak ada antrean terpisah: pemrosesan berjalan di proses backend yang sama, satu worker.
+3. Backend menjadwalkan `services/pipeline.process_document()` sebagai *background task* FastAPI. Dokumen diproses satu per satu (dikunci `_satu_per_satu`) supaya OCR dan LLM tidak berebut CPU dan GPU. Tabel `documents` sekaligus menjadi antrean: dokumen yang belum selesai tetap berstatus `diproses`.
 4. Layanan pipeline memanggil fungsi yang ditunjuk `PIPELINE_IMPORT`:
    - mode `mock`: `integrations/mock.py`, hasil sintetis dari nama berkas;
    - mode `real`: `integrations/real.py`, yang meneruskan pengaturan backend ke `pipeline.main.process_document()`.
 5. Hasil divalidasi dengan skema `PipelineResult` dan dicek terhadap taksonomi. Kalau skor keyakinan di atas atau sama dengan `CONFIDENCE_THRESHOLD` (0,85), status menjadi `terverifikasi`; kalau di bawah, `menunggu_verifikasi`. Galat apa pun membuat status `gagal` dengan pesan aman.
 6. Dosen membuka Kotak Verifikasi, lalu menyetujui (`/approve`), menolak (`/reject`), atau mengoreksi (`PATCH`). Koreksi menyimpan snapshot sebelum dan sesudah di tabel `koreksi`.
-7. Saat backend start, dokumen yang masih `diproses` ditandai `gagal` (`mark_interrupted`), karena prosesnya pasti sudah terputus.
+7. Saat backend start, dokumen yang masih `diproses` (terputus oleh restart) diproses ulang di thread terpisah (`lanjutkan_antrean`). Jumlah percobaan dicatat di `metadata_lain._percobaan` sebelum pipeline jalan. Dokumen yang sudah 3 kali terputus ditandai `gagal`, supaya dokumen yang membuat backend crash tidak berputar terus.
 
 Status dokumen: `diproses`, `menunggu_verifikasi`, `terverifikasi`, `ditolak`, `gagal`. Diagram lengkap ada di `docs/ARSITEKTUR.md`.
 
@@ -81,6 +81,7 @@ Teks hasil di bawah 20 karakter dianggap tidak terbaca dan dokumen gagal dengan 
 5. Skor = jumlah suara jenis pemenang dibagi jumlah panggilan. Dengan 3 panggilan, skor hanya bisa 0,33, 0,67, atau 1,00, jadi ambang 0,85 berarti **ketiga panggilan harus sepakat**.
 6. Skor dibatasi turun pada kasus berisiko: jenis `Lainnya` (maksimal 0,5), teks di bawah 80 karakter (0,6), dan ada kalimat menyerupai perintah ke AI (0,5).
 7. Metadata diambil dari panggilan pertama yang memilih jenis pemenang. Periode yang tidak menyebut tahun akademik (`2025/2026`) dikosongkan, karena LLM sering mengarang tahun dari tanggal dokumen.
+8. Nomor dan tanggal dokumen hanya dipakai kalau benar-benar tertulis di teks (`saring_nomor`, `saring_tanggal`). Tanggal dikenali dalam bentuk angka (15-08-2026, 2026-08-15) dan nama bulan Indonesia atau Inggris. Kalau tidak ditemukan, field dikosongkan dan alasannya dicatat.
 
 ### 4.3 Pertahanan terhadap prompt injection
 
@@ -110,7 +111,7 @@ Petunjuk jenis di prompt ditambahkan setelah melihat kesalahan pada 45 dokumen u
 |---|---|
 | `main.py` | Aplikasi FastAPI, CORS, `/health`, `/taxonomy`, `/admin/koreksi/export`, penanda proses terputus saat start |
 | `config.py` | Semua pengaturan dari `.env` (pydantic-settings). Production menolak mode mock |
-| `api/auth.py` | `POST /auth/login` (JWT), `GET /auth/me` |
+| `api/auth.py` | `POST /auth/login` (JWT), `GET /auth/me`, batas percobaan login per username (`PembatasLogin`) |
 | `api/documents.py` | Unggah, daftar, detail, berkas, setujui, tolak, koreksi |
 | `services/documents.py` | Aturan akses (`access_clause`, `accessible`, `owned`), serialisasi, penautan dosen |
 | `services/pipeline.py` | Menjalankan pipeline dan menyimpan hasilnya |
@@ -224,8 +225,8 @@ Ubah `OLLAMA_MODEL`, unduh dengan `ollama pull`, lalu jalankan evaluasi akurasi.
 
 | Pemeriksaan | Perintah | Butuh |
 |---|---|---|
-| Tes backend (21 tes) | `cd backend`, lalu `PYTHONPATH=.. ../.venv/Scripts/python.exe -m pytest -q` | Tidak butuh PostgreSQL atau Ollama |
-| Tes pipeline (36 tes) | `.venv/Scripts/python.exe -m pytest pipeline/tests -q` | Tidak butuh OCR atau Ollama |
+| Tes backend (23 tes) | `cd backend`, lalu `PYTHONPATH=.. ../.venv/Scripts/python.exe -m pytest -q` | Tidak butuh PostgreSQL atau Ollama |
+| Tes pipeline (53 tes) | `.venv/Scripts/python.exe -m pytest pipeline/tests -q` | Tidak butuh OCR atau Ollama |
 | Tipe frontend | `cd frontend`, lalu `npm run typecheck` | |
 | Build frontend | `npm run build` | Internet untuk Google Fonts |
 | Coba satu dokumen | `uji-dokumen.cmd <berkas>` | Ollama, PaddleOCR |
@@ -246,8 +247,8 @@ Diurutkan dari yang paling berdampak. Sumber lain: `docs/TINDAK_LANJUT.md` dan K
 
 1. **Uji di server sungguhan:** systemd, OCR dengan GPU, HTTPS (Panduan Instalasi Bagian 9).
 2. **Keputusan taksonomi:** SK pembimbing TA dan berita acara sidang masuk PND atau PNJ. Begitu diputuskan, ubah `taxonomy.json` atau label evaluasi, lalu ukur ulang.
-3. **Antrean permanen.** Background task hilang saat restart. Usulan: tabel antrean di PostgreSQL atau pustaka antrean ringan, dengan worker terpisah yang mengambil ulang dokumen `diproses`.
-4. **Batas percobaan login.**
+3. **Batas login per alamat IP.** Batas sekarang per username, karena di belakang reverse proxy semua permintaan ber-IP sama. Akibatnya orang lain bisa mengunci akun dosen selama 15 menit dengan sengaja salah password. Perlu Caddy meneruskan IP asli dan backend memercayainya.
+4. **Antrean di proses terpisah.** Antrean sudah permanen (dilanjutkan saat restart), tetapi masih berjalan di proses backend. Untuk beban besar, pindahkan ke worker terpisah.
 
 **Fitur admin** (sekarang lewat perintah `kelola`)
 
@@ -261,15 +262,15 @@ Butir 5 dan 7 mengubah skema dan kontrak.
 
 **Akurasi AI**
 
-10. Aturan tanggal untuk berita acara: AI kadang mengambil tanggal formulir, bukan tanggal sidang.
-11. Validasi bahwa nomor dan tanggal dokumen benar-benar tertulis di teks.
+10. Aturan tanggal berita acara sudah ada di prompt, tetapi belum terbukti pada dokumen asli: teks sintetis dengan tanggal formulir di kop sudah benar dengan prompt lama maupun baru. Perlu contoh dokumen asli yang salah.
+11. Penyaring nomor dan tanggal bisa mengosongkan nilai yang benar kalau OCR salah baca (misalnya huruf O dibaca angka 0). Pantau lewat koreksi dosen.
 12. Contoh di prompt untuk jenis yang masih tertukar (surat tugas asesor, narasumber, reviewer).
 13. Fine-tune (LoRA) ditunda sampai ada sekitar 100 dokumen asli berlabel. Bahannya dari tabel `koreksi`.
 
 **Kecepatan**
 
 14. OCR di GPU dan OCR hanya beberapa halaman awal (lihat `docs/TINDAK_LANJUT.md` Bagian 1).
-15. Unggahan banyak berkas saling memperlambat karena satu worker.
+15. Dokumen diproses satu per satu, jadi unggahan banyak dosen sekaligus mengantre. Kecepatan di server GPU 12 GB belum diukur.
 
 **Keamanan**
 
