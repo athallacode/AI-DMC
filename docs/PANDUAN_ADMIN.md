@@ -12,13 +12,13 @@ Aplikasi belum punya laman admin. Semua tugas di panduan ini dikerjakan lewat pe
 
 ## 1. Cara menjalankan perintah
 
-Masuk ke server lewat SSH, lalu ke folder aplikasi. Semua perintah berbentuk:
+Masuk ke server lewat SSH. Semua perintah berbentuk:
 
 ```
-docker compose exec backend python -m app.kelola <kelompok> <perintah> [pilihan]
+sudo kelola <kelompok> <perintah> [pilihan]
 ```
 
-Untuk singkatnya, panduan ini menulis `kelola` sebagai pengganti `docker compose exec backend python -m app.kelola`.
+Perintah `kelola` dipasang oleh `deploy/pasang-backend.sh` (lihat Panduan Instalasi) dan wajib dijalankan dengan `sudo`. Untuk singkatnya, contoh di panduan ini menulis `kelola` saja.
 
 Bantuan selalu tersedia:
 
@@ -28,7 +28,9 @@ kelola akun --help
 kelola dokumen proses-ulang --help
 ```
 
-Di laptop pengembang (tanpa Docker), jalankan dari folder `backend` dengan `PYTHONPATH=..` dan `python -m app.kelola`.
+Di laptop pengembang, jalankan dari folder `backend` dengan `PYTHONPATH=..` dan `python -m app.kelola`.
+
+Perintah `docker compose` di panduan ini (untuk membaca database) dijalankan dari folder aplikasi `/opt/ai-dmc`.
 
 ## 2. Mengelola akun
 
@@ -59,17 +61,17 @@ kelola akun buat --username budi --nama "Budi Santoso" --nip 19800101 --oleh "Na
 
    Kolom `peran` boleh kosong, isinya dianggap `dosen`.
 
-2. Salin berkas ke container, jalankan impor, lalu ambil hasilnya:
+2. Salin berkas ke folder home Anda di server (misalnya dengan `scp`), lalu jalankan impor dari folder itu:
 
    ```
-   docker compose cp dosen.csv backend:/tmp/dosen.csv
-   kelola akun impor /tmp/dosen.csv --keluar /tmp/password_awal.csv --oleh "Nama Pengelola"
-   docker compose cp backend:/tmp/password_awal.csv ./password_awal.csv
-   docker compose exec backend rm /tmp/dosen.csv /tmp/password_awal.csv
+   sudo kelola akun impor dosen.csv --keluar password_awal.csv --oleh "Nama Pengelola"
+   sudo cat password_awal.csv
    ```
+
+   `password_awal.csv` dibuat dengan izin baca khusus root, jadi perlu `sudo` untuk membukanya.
 
 3. Baris yang bermasalah (username atau NIP sudah dipakai, nama kosong) dilewati dan disebutkan di layar. Baris lain tetap dibuat.
-4. `password_awal.csv` berisi password semua akun baru. **Hapus berkas itu setelah password dibagikan.**
+4. `password_awal.csv` berisi password semua akun baru. **Hapus berkas itu setelah password dibagikan** (`sudo rm password_awal.csv dosen.csv`).
 
 ### Dosen lupa password
 
@@ -158,13 +160,13 @@ Dosen yang NIP-nya tertulis di dokumen sebenarnya tertaut otomatis setelah pengu
 **Harian**
 
 - Cek dokumen gagal: `kelola dokumen gagal`.
-- Cek semua layanan jalan: `docker compose ps` (semua berstatus running atau healthy).
-- Pastikan cadangan semalam berhasil (lihat Kebutuhan Server bagian 8).
+- Cek semua layanan jalan: `systemctl status ai-dmc-backend` (active) dan `docker compose ps` (running atau healthy).
+- Pastikan cadangan semalam berhasil: ada baris OK hari ini di `/var/log/ai-dmc-cadangan.log` (Panduan Instalasi Bagian 6).
 
 **Mingguan**
 
 - Cek sisa ruang disk: `df -h`.
-- Lihat galat backend: `docker compose logs --since 168h backend | grep -i error`.
+- Lihat galat backend: `journalctl -u ai-dmc-backend --since "7 days ago" | grep -i error`.
 
 **Sebelum restart atau update**
 

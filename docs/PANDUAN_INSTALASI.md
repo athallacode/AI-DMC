@@ -10,19 +10,21 @@ Ada dua jalur instalasi dengan tingkat kesiapan yang berbeda:
 | Jalur | Untuk | Status |
 |---|---|---|
 | Bagian 3: laptop pengembang (Windows) | Pengembangan, demo, evaluasi akurasi | **Sudah dipakai dan teruji** |
-| Bagian 4: server (Ubuntu + Docker) | Pemakaian 1 prodi | **Belum pernah dijalankan.** Beberapa langkah menunggu perbaikan kode (Bagian 9) |
+| Bagian 4: server Ubuntu | Pemakaian 1 prodi | **Sebagian teruji** (lihat Bagian 9). Belum pernah dijalankan di server sungguhan |
 
-Langkah yang belum teruji ditandai **(belum diuji)**. Jangan memakai data dosen asli di server sebelum Bagian 4 langkah 9 selesai.
+Susunan server sama dengan laptop pengembang, hanya Windows diganti Ubuntu: PostgreSQL dan frontend di Docker, sedangkan backend, Ollama, dan Caddy dipasang langsung di Ubuntu supaya PaddleOCR dan Ollama memakai GPU tanpa lapisan tambahan.
+
+Jangan memakai data dosen asli di server sebelum Bagian 4 langkah 9 selesai.
 
 ## 1. Gambaran komponen
 
 | Komponen | Isi | Port (hanya di mesin itu) |
 |---|---|---|
-| Frontend | Next.js 15, tampilan untuk dosen | 3000 |
-| Backend | FastAPI (Python 3.12), API, antrean proses, pipeline AI | 8000 |
+| Frontend | Next.js 15, tampilan untuk dosen. Di server: container Docker | 3000 |
+| Backend | FastAPI (Python 3.12), API, antrean proses, pipeline AI. Di server: layanan systemd `ai-dmc-backend` | 8000 |
 | Pipeline AI | PyMuPDF dan python-docx (teks), PaddleOCR (scan dan foto), dijalankan di dalam backend | - |
-| Ollama | LLM lokal `gemma4:e4b` untuk klasifikasi dan metadata | 11434 |
-| PostgreSQL 17 | Akun, metadata dokumen, riwayat koreksi, log audit | 5432 |
+| Ollama | LLM lokal `gemma4:e4b` untuk klasifikasi dan metadata. Di server: layanan systemd `ollama` | 11434 |
+| PostgreSQL 17 | Akun, metadata dokumen, riwayat koreksi, log audit. Di server: container Docker | 5432 |
 | Folder `storage/` | Berkas asli dokumen dosen | - |
 
 Alur singkat: dosen mengunggah lewat frontend, backend menyimpan berkas ke `storage/` dan mencatatnya di database, lalu pipeline membaca teks, memanggil Ollama tiga kali (voting), dan menyimpan hasilnya. Dokumen yang ketiga suaranya sepakat (skor 1,00, ambang 0,85) langsung masuk arsip; sisanya masuk Kotak Verifikasi dosen.
@@ -37,15 +39,15 @@ Semua komponen membaca `.env` di akar repo. Salin dari `.env.example`, lalu isi.
 |---|---|---|
 | `POSTGRES_DB`, `POSTGRES_USER` | `ai_dmc` | `ai_dmc` |
 | `POSTGRES_PASSWORD` | Bebas | **Acak, minimal 24 karakter** |
-| `DATABASE_URL` | `postgresql+psycopg://ai_dmc:<password>@127.0.0.1:5432/ai_dmc` | `postgresql+psycopg://ai_dmc:<password>@db:5432/ai_dmc` |
+| `DATABASE_URL` | `postgresql+psycopg://ai_dmc:<password>@127.0.0.1:5432/ai_dmc` | sama |
 | `JWT_SECRET` | Acak, minimal 32 karakter | **Acak baru, minimal 32 karakter** |
 | `JWT_EXPIRE_MINUTES` | 60 | 60 |
 | `APP_ENVIRONMENT` | `development` | `production` |
 | `PIPELINE_MODE` | `real` (atau `mock` untuk UI saja) | `real` (production menolak `mock`) |
 | `PIPELINE_IMPORT` | `app.integrations.real:process_document` | sama |
-| `STORAGE_DIR` | `../storage` | `/app/storage` |
-| `TAXONOMY_PATH` | `../pipeline/config/taxonomy.json` | `/app/pipeline/config/taxonomy.json` |
-| `OLLAMA_HOST` | `http://localhost:11434` | `http://host.docker.internal:11434` |
+| `STORAGE_DIR` | `../storage` | `/opt/ai-dmc/storage` |
+| `TAXONOMY_PATH` | `../pipeline/config/taxonomy.json` | `/opt/ai-dmc/pipeline/config/taxonomy.json` |
+| `OLLAMA_HOST` | `http://localhost:11434` | `http://127.0.0.1:11434` |
 | `OLLAMA_MODEL` | `gemma4:e4b` | `gemma4:e4b` |
 | `OLLAMA_TIMEOUT` | 180 | 180 |
 | `PIPELINE_VOTES` | 3 | 3 |
@@ -66,6 +68,7 @@ Catatan:
 - Variabel sistem mengalahkan `.env`. Kalau di Windows ada variabel sistem `OLLAMA_HOST`, skrip `run-local.ps1` dan `uji-dokumen.cmd` sudah menimpanya dengan nilai dari `.env`.
 - `NEXT_PUBLIC_API_URL` ditanam saat frontend dibangun. Kalau nilainya berubah, frontend harus dibangun ulang.
 - Mengubah `JWT_SECRET` membuat semua dosen harus masuk ulang.
+- Di server, path di `.env` wajib absolut dan nilainya tidak boleh berisi spasi atau tanda `$`, karena perintah `kelola` membaca `.env` sebagai skrip shell. Nilai dari perintah pembuat nilai acak di atas aman.
 
 ## 3. Instalasi di laptop pengembang (Windows)
 
@@ -150,22 +153,31 @@ npm run typecheck
 
 Tes backend dan pipeline memakai SQLite, OCR palsu, dan LLM palsu, jadi tidak butuh Ollama atau PostgreSQL.
 
-## 4. Instalasi di server (Ubuntu + Docker)
+## 4. Instalasi di server Ubuntu
 
 Kebutuhan perangkat keras dan daftar yang perlu diminta ke CoE ada di dokumen Kebutuhan Server. Ringkasnya: satu PC dengan GPU NVIDIA 12 GB, RAM 32 GB, SSD 512 GB, UPS, dan disk cadangan terpisah.
 
-**Seluruh bagian ini belum diuji.** Langkah 4 dan 6 menunggu perbaikan kode di Bagian 9.
+Berkas pendukung ada di folder `deploy/`:
+
+| Berkas | Fungsi |
+|---|---|
+| `pasang-backend.sh` | Memasang atau memperbarui backend: paket sistem, akun layanan `aidmc`, venv Python, PaddleOCR, layanan systemd, dan perintah `kelola` |
+| `ai-dmc-backend.service` | Layanan systemd backend (dipasang oleh skrip di atas) |
+| `kelola` | Perintah pengelola di server, dipakai sebagai `sudo kelola ...` |
+| `Caddyfile.contoh` | Konfigurasi HTTPS dengan Caddy |
+| `cadangan.sh` | Cadangan harian database dan `storage/` |
 
 ### Langkah
 
-1. Pasang Ubuntu Server 24.04 LTS, driver NVIDIA, Docker Engine dengan Compose, dan NVIDIA Container Toolkit. Periksa:
+1. Pasang Ubuntu Server 24.04 LTS, driver NVIDIA, dan Docker Engine dengan plugin Compose. Masukkan akun admin ke grup `docker`. Periksa GPU terbaca:
 
    ```
    nvidia-smi
-   docker run --rm --gpus all ubuntu nvidia-smi
    ```
 
-2. Pasang Ollama di host, unduh model, dan pastikan model termuat penuh di GPU:
+   Catat angka **CUDA Version** di pojok kanan atas, dipakai di langkah 5.
+
+2. Pasang Ollama, unduh model, dan pastikan model termuat penuh di GPU:
 
    ```
    curl -fsSL https://ollama.com/install.sh | sh
@@ -173,7 +185,7 @@ Kebutuhan perangkat keras dan daftar yang perlu diminta ke CoE ada di dokumen Ke
    ollama run gemma4:e4b "tes" && ollama ps
    ```
 
-   Kolom PROCESSOR di `ollama ps` harus `100% GPU`. Ollama harus bisa dihubungi dari container: atur `OLLAMA_HOST=0.0.0.0:11434` pada service Ollama di host (`systemctl edit ollama`), lalu tutup port 11434 dari luar dengan firewall.
+   Kolom PROCESSOR di `ollama ps` harus `100% GPU`. Biarkan Ollama mendengar di `127.0.0.1` (bawaan), karena backend berjalan di mesin yang sama.
 
 3. Ambil kode dan siapkan `.env` sesuai kolom "Server" di Bagian 2:
 
@@ -181,47 +193,46 @@ Kebutuhan perangkat keras dan daftar yang perlu diminta ke CoE ada di dokumen Ke
    sudo mkdir -p /opt/ai-dmc && sudo chown $USER /opt/ai-dmc
    git clone <alamat-repo> /opt/ai-dmc
    cd /opt/ai-dmc
-   cp .env.example .env && chmod 600 .env
+   cp .env.example .env
    nano .env
    ```
 
-4. **(belum diuji, menunggu Bagian 9 poin 1 dan 2)** Pastikan image backend sudah memuat PaddleOCR dan cache modelnya disimpan di volume.
-
-5. Bangun dan jalankan:
+4. Nyalakan PostgreSQL dan frontend di Docker. Frontend dibangun dengan `NEXT_PUBLIC_API_URL` dari `.env`:
 
    ```
    docker compose up -d --build
    docker compose ps
-   docker compose logs backend | tail -20
+   ```
+
+   Keduanya harus berstatus running, dan `db` berstatus healthy. Backend sengaja tidak ikut di sini.
+
+5. Pasang backend. Pilih paket PaddlePaddle sesuai CUDA Version dari langkah 1 (`cu118`, `cu126`, atau `cu129`; cek daftar terbaru di situs PaddlePaddle). Skrip memakai `cu126` kalau tidak diisi:
+
+   ```
+   sudo CUDA=cu126 sh deploy/pasang-backend.sh
    curl http://127.0.0.1:8000/health
    ```
 
-   `/health` harus menjawab `"status":"ok"` dan `"pipeline_mode":"real"`. Migrasi database berjalan otomatis setiap backend start.
+   Skrip ini menjalankan uji bawaan PaddlePaddle; pastikan hasilnya menyebut GPU, bukan CPU. `/health` harus menjawab `"status":"ok"` dan `"pipeline_mode":"real"`. Migrasi database berjalan otomatis setiap backend start. Saat dokumen scan pertama diproses, PaddleOCR mengunduh modelnya (sekitar 140 MB) ke `/var/lib/ai-dmc`.
 
-6. **(belum diuji, menunggu Bagian 9 poin 3)** Pasang reverse proxy HTTPS. Usulan dengan Caddy, satu domain untuk frontend dan backend:
+6. Pasang Caddy untuk HTTPS (ikuti cara pasang di situs Caddy untuk Ubuntu), lalu pakai contoh konfigurasi:
 
    ```
-   ai-dmc.<domain-kampus> {
-       handle_path /api/* {
-           reverse_proxy 127.0.0.1:8000
-       }
-       reverse_proxy 127.0.0.1:3000
-       request_body {
-           max_size 420MB
-       }
-   }
+   sudo cp deploy/Caddyfile.contoh /etc/caddy/Caddyfile
+   sudo nano /etc/caddy/Caddyfile
+   sudo systemctl reload caddy
    ```
 
-   Batas 420 MB menampung 20 berkas x 20 MB per unggahan. Folder `storage/` jangan pernah disajikan langsung oleh proxy.
+   Ganti nama domain, dan tambahkan baris `tls` kalau memakai sertifikat dari kampus. Pastikan `NEXT_PUBLIC_API_URL=https://<domain>/api` dan `CORS_ORIGINS=https://<domain>` di `.env`. Kalau salah satunya baru diubah, jalankan `docker compose up -d --build frontend` dan `sudo systemctl restart ai-dmc-backend`.
 
 7. Buat akun admin pertama. Seed akun dummy ditolak di production, jadi pakai perintah pengelola (lihat Panduan Admin):
 
    ```
-   docker compose exec backend python -m app.kelola akun buat --username <admin> --nama "<Nama Admin CoE>" --peran admin --oleh "<Nama Pengelola>"
+   sudo kelola akun buat --username <admin> --nama "<Nama Admin CoE>" --peran admin --oleh "<Nama Pengelola>"
    ```
 
-8. Pasang cadangan harian (Bagian 6) dan coba pulihkan sekali ke database kosong.
-9. Uji 10 dokumen sintetis campuran (PDF digital, PDF scan, foto, DOCX) dari `tools/generate_dummy_format_nyata.py`. Periksa semuanya selesai tanpa status gagal dan waktunya wajar.
+8. Pasang cadangan harian (Bagian 6) dan coba pulihkan sekali.
+9. Uji 10 dokumen sintetis campuran (PDF digital, PDF scan, foto, DOCX) dari `tools/generate_dummy_format_nyata.py`. Periksa semuanya selesai tanpa status gagal, dan waktu per dokumen wajar (di bawah 1 menit dengan GPU).
 10. Buat akun dosen dari CSV (Panduan Admin Bagian 2), uji coba dengan beberapa dosen, baru dibuka untuk semua.
 
 ## 5. Operasional sehari-hari
@@ -230,14 +241,18 @@ Semua perintah dijalankan dari `/opt/ai-dmc`.
 
 | Keperluan | Perintah |
 |---|---|
-| Status semua layanan | `docker compose ps` |
-| Log backend terbaru | `docker compose logs --tail 100 backend` |
-| Log backend terus-menerus | `docker compose logs -f backend` |
+| Status backend | `systemctl status ai-dmc-backend` |
+| Status database dan frontend | `docker compose ps` |
+| Log backend terbaru | `journalctl -u ai-dmc-backend -n 100` |
+| Log backend terus-menerus | `journalctl -u ai-dmc-backend -f` |
+| Log frontend | `docker compose logs --tail 100 frontend` |
 | Kesehatan API | `curl http://127.0.0.1:8000/health` |
 | Model di GPU | `ollama ps` |
 | Pemakaian GPU | `nvidia-smi` |
-| Ruang disk | `df -h` dan `du -sh storage` |
-| Dokumen gagal | `docker compose exec backend python -m app.kelola dokumen gagal` |
+| Ruang disk | `df -h` dan `sudo du -sh storage` |
+| Dokumen gagal | `sudo kelola dokumen gagal` |
+
+Semua layanan menyala sendiri saat server dinyalakan ulang: backend dan Ollama lewat systemd, database dan frontend lewat `restart: unless-stopped` di Docker.
 
 ### Menghentikan dan menyalakan
 
@@ -247,95 +262,91 @@ Semua perintah dijalankan dari `/opt/ai-dmc`.
    docker compose exec db psql -U ai_dmc -d ai_dmc -c "SELECT count(*) FROM documents WHERE status = 'diproses'"
    ```
 
-2. Kalau hasilnya 0:
+2. Kalau hasilnya 0, hentikan backend dulu, baru yang lain. Nyalakan dengan urutan terbalik:
 
    ```
+   sudo systemctl stop ai-dmc-backend
    docker compose down
    docker compose up -d
+   sudo systemctl start ai-dmc-backend
    ```
 
    `docker compose down` tidak menghapus database dan berkas. **Jangan pakai `docker compose down -v`**, karena `-v` menghapus volume database.
 
-Kalau ada dokumen yang terlanjur gagal karena restart, proses ulang dengan `kelola dokumen proses-ulang` (Panduan Admin Bagian 3).
+Kalau ada dokumen yang terlanjur gagal karena restart, proses ulang dengan `sudo kelola dokumen proses-ulang` (Panduan Admin Bagian 3).
 
 ### Memperbarui aplikasi
 
 1. Cadangkan dulu (Bagian 6).
 2. Pastikan tidak ada dokumen diproses (lihat di atas). Lakukan di luar jam kerja.
-3. Ambil versi baru, bangun ulang, dan periksa:
+3. Ambil versi baru, pasang ulang backend, bangun ulang frontend, lalu periksa:
 
    ```
    git fetch && git log --oneline HEAD..origin/main
    git pull
+   sudo CUDA=cu126 sh deploy/pasang-backend.sh
    docker compose up -d --build
    curl http://127.0.0.1:8000/health
    ```
 
-4. Migrasi database berjalan otomatis. Kalau backend gagal start, baca `docker compose logs backend`. Untuk kembali ke versi sebelumnya, `git checkout <commit-lama>` lalu bangun ulang, dan pulihkan database dari cadangan kalau migrasi baru sudah terlanjur berjalan.
+4. Migrasi database berjalan otomatis saat backend start. Kalau backend gagal start, baca `journalctl -u ai-dmc-backend -n 100`. Untuk kembali ke versi sebelumnya, `git checkout <commit-lama>` lalu ulangi langkah 3, dan pulihkan database dari cadangan kalau migrasi baru sudah terlanjur berjalan.
 
 ### Mengganti model LLM
 
-Ubah `OLLAMA_MODEL` di `.env`, unduh modelnya dengan `ollama pull`, lalu `docker compose up -d backend`. Jalankan evaluasi akurasi (Bagian 3) dengan model baru sebelum dipakai, karena aturan di prompt disetel untuk `gemma4:e4b`.
+Ubah `OLLAMA_MODEL` di `.env`, unduh modelnya dengan `ollama pull`, lalu `sudo systemctl restart ai-dmc-backend`. Jalankan evaluasi akurasi (Bagian 3) dengan model baru sebelum dipakai, karena aturan di prompt disetel untuk `gemma4:e4b`.
 
 ### Mengubah daftar kategori dan jenis
 
-Daftar ada di `pipeline/config/taxonomy.json`. Nama jenis wajib unik di seluruh taksonomi. Setelah diubah, jalankan `pytest pipeline/tests`, bangun ulang backend, dan jalankan evaluasi akurasi. Dokumen lama tidak ikut berubah.
+Daftar ada di `pipeline/config/taxonomy.json`. Nama jenis wajib unik di seluruh taksonomi. Setelah diubah, jalankan tes pipeline, `sudo systemctl restart ai-dmc-backend`, dan jalankan evaluasi akurasi. Dokumen lama tidak ikut berubah.
 
 ## 6. Cadangan dan pemulihan
 
-**(belum diuji)** Dua hal yang wajib dicadangkan bersama-sama: database dan folder `storage/`. Salah satu tanpa yang lain tidak bisa dipulihkan dengan utuh.
+Database dan folder `storage/` wajib dicadangkan bersama. Salah satu tanpa yang lain tidak bisa dipulihkan dengan utuh.
 
 ### Cadangan harian
 
-Contoh skrip `/opt/ai-dmc/cadangan.sh`:
+Skrip `deploy/cadangan.sh` membuat `db_<tanggal>.dump` (pg_dump) dan `storage_<tanggal>.tar.gz`, lalu menghapus cadangan yang lebih tua dari 7 hari. Tujuan bawaannya `/mnt/cadangan/ai-dmc`, yaitu disk eksternal atau NAS, bukan disk yang sama dengan server.
+
+Coba sekali dengan tangan, lalu jadwalkan pukul 02.00 lewat `sudo crontab -e`:
 
 ```
-#!/bin/sh
-set -e
-cd /opt/ai-dmc
-TUJUAN=/mnt/cadangan/ai-dmc
-HARI=$(date +%F)
-mkdir -p "$TUJUAN"
-docker compose exec -T db pg_dump -U ai_dmc -d ai_dmc -Fc > "$TUJUAN/db_$HARI.dump"
-tar czf "$TUJUAN/storage_$HARI.tar.gz" storage
-find "$TUJUAN" -name 'db_*.dump' -mtime +7 -delete
-find "$TUJUAN" -name 'storage_*.tar.gz' -mtime +7 -delete
+sudo /opt/ai-dmc/deploy/cadangan.sh
+0 2 * * * /opt/ai-dmc/deploy/cadangan.sh >> /var/log/ai-dmc-cadangan.log 2>&1
 ```
 
-Jadwalkan pukul 02.00 dengan `crontab -e`:
-
-```
-0 2 * * * /opt/ai-dmc/cadangan.sh >> /var/log/ai-dmc-cadangan.log 2>&1
-```
-
-- `/mnt/cadangan` adalah disk eksternal atau NAS, bukan disk yang sama dengan server.
-- Cadangan berisi data pribadi dosen. Batasi aksesnya sama seperti server.
-- Periksa setiap hari bahwa berkas hari itu ada dan ukurannya wajar.
+- Ganti tujuan dengan `TUJUAN=/lokasi/lain` di depan perintah, dan lama simpan dengan `SIMPAN_HARI=14`.
+- Skrip berhenti dengan pesan GAGAL kalau disk cadangan tidak terpasang.
+- Cadangan berisi data pribadi dosen dan hanya bisa dibaca root.
+- Periksa `/var/log/ai-dmc-cadangan.log` setiap hari: harus ada baris OK untuk hari itu.
 
 ### Memulihkan
 
 Pulihkan ke database kosong, bukan menimpa database yang sedang berjalan:
 
-1. Hentikan aplikasi, simpan data lama, dan buat volume baru:
+1. Hentikan aplikasi dan simpan data lama:
 
    ```
+   sudo systemctl stop ai-dmc-backend
    docker compose down
-   mv storage storage_lama
+   sudo mv storage storage_lama
+   docker volume ls
    docker volume rm ai-dmc_postgres_data
    docker compose up -d db
    ```
 
-   Nama volume bisa berbeda; cek dengan `docker volume ls`. Pindahkan volume lama ke cadangan dulu kalau masih ragu.
+   Nama volume bisa berbeda; pakai nama dari `docker volume ls` yang berakhiran `postgres_data`.
 
 2. Pulihkan database dan berkas:
 
    ```
-   docker compose exec -T db pg_restore -U ai_dmc -d ai_dmc --no-owner < /mnt/cadangan/ai-dmc/db_<tanggal>.dump
-   tar xzf /mnt/cadangan/ai-dmc/storage_<tanggal>.tar.gz
+   docker compose exec -T db sh -c 'pg_restore -U "$POSTGRES_USER" -d "$POSTGRES_DB" --no-owner' < /mnt/cadangan/ai-dmc/db_<tanggal>.dump
+   sudo tar xzf /mnt/cadangan/ai-dmc/storage_<tanggal>.tar.gz
+   sudo chown -R aidmc:aidmc storage
    docker compose up -d
+   sudo systemctl start ai-dmc-backend
    ```
 
-3. Periksa `/health`, masuk dengan satu akun, dan buka beberapa dokumen di Arsip.
+3. Periksa `/health`, masuk dengan satu akun, dan buka beberapa dokumen di Arsip. Setelah yakin, hapus `storage_lama`.
 
 Uji pemulihan ini sekali sebelum go-live, lalu setiap 6 bulan.
 
@@ -344,34 +355,45 @@ Uji pemulihan ini sekali sebelum go-live, lalu setiap 6 bulan.
 | Gejala | Kemungkinan penyebab | Tindakan |
 |---|---|---|
 | Semua dokumen baru gagal, keterangan "Model AI tidak bisa dihubungi" | Ollama mati atau tidak terjangkau | `ollama ps`, `systemctl status ollama`, cek `OLLAMA_HOST` berupa URL lengkap |
-| Hanya dokumen scan atau foto yang gagal, keterangan "OCR tidak tersedia di server" | PaddleOCR tidak terpasang atau modelnya gagal diunduh | Lihat log backend. Di container, cek Bagian 9 poin 1 |
-| Satu dokumen butuh lebih dari 5 menit | Model LLM tidak muat di GPU | `ollama ps`, kolom PROCESSOR harus 100% GPU. Tutup program lain yang memakai GPU |
+| Hanya dokumen scan atau foto yang gagal, keterangan "OCR tidak tersedia di server" | PaddleOCR tidak terpasang, kurang pustaka sistem, atau model gagal diunduh | `journalctl -u ai-dmc-backend -n 200`, lalu jalankan ulang `pasang-backend.sh` |
+| Satu dokumen butuh lebih dari 5 menit | Model LLM tidak muat di GPU, atau PaddlePaddle terpasang versi CPU | `ollama ps` harus 100% GPU. Ulangi `pasang-backend.sh` dengan `CUDA=` yang benar dan pastikan uji PaddlePaddle menyebut GPU |
 | Banyak dokumen gagal "terhenti saat layanan dimulai ulang" | Backend di-restart saat memproses | Proses ulang lewat `kelola`. Lain kali cek status diproses sebelum restart |
-| Backend tidak mau start: "Mock tidak diizinkan pada production" | `PIPELINE_MODE=mock` dengan `APP_ENVIRONMENT=production` | Ubah ke `PIPELINE_MODE=real` |
-| Backend tidak mau start: galat `JWT_SECRET` | Nilai kurang dari 32 karakter | Buat nilai acak baru (Bagian 2) |
-| Frontend tampil tetapi gagal masuk dengan pesan jaringan | `NEXT_PUBLIC_API_URL` atau `CORS_ORIGINS` tidak cocok dengan domain | Samakan dengan domain, lalu bangun ulang frontend |
-| Unggahan besar ditolak sebelum sampai backend | Batas ukuran di reverse proxy | Naikkan `max_size` (Bagian 4 langkah 6) |
-| Disk hampir penuh | Berkas dokumen atau image Docker lama | `du -sh storage`, `docker system df`, lalu `docker image prune` |
+| Backend tidak mau start | Database belum siap, `.env` salah, atau `JWT_SECRET` kurang dari 32 karakter | `journalctl -u ai-dmc-backend -n 100`. Backend mencoba ulang sendiri setiap 10 detik |
+| Galat "Mock tidak diizinkan pada production" | `PIPELINE_MODE=mock` dengan `APP_ENVIRONMENT=production` | Ubah ke `PIPELINE_MODE=real` |
+| Frontend tampil tetapi gagal masuk dengan pesan jaringan | `NEXT_PUBLIC_API_URL` atau `CORS_ORIGINS` tidak cocok dengan domain | Samakan dengan domain, bangun ulang frontend, restart backend |
+| Unggahan besar ditolak sebelum sampai backend | Batas ukuran di Caddy | Naikkan `max_size` di `/etc/caddy/Caddyfile` |
+| `kelola` gagal membaca pengaturan | Nilai di `.env` berisi spasi atau `$` | Buat ulang nilai itu dengan perintah pembuat nilai acak (Bagian 2) |
+| Disk hampir penuh | Berkas dokumen atau image Docker lama | `sudo du -sh storage`, `docker system df`, lalu `docker image prune` |
 
 Log backend tidak mencatat teks dokumen, tetapi bisa memuat kode dan lokasi berkas. Saat meminta bantuan tim pengembang, kirim potongan log dan kode dokumen, bukan berkas dokumennya.
 
 ## 8. Keamanan server
 
-- Hanya port 443 (dan 80 untuk redirect) yang terbuka ke jaringan kampus. Port 3000, 8000, 5432, dan 11434 hanya untuk mesin itu sendiri. Di `docker-compose.yml` port sudah diikat ke `127.0.0.1`.
+- Hanya port 443 (dan 80 untuk redirect) yang terbuka ke jaringan kampus. Port 3000, 8000, 5432, dan 11434 hanya untuk mesin itu sendiri: Docker mengikatnya ke `127.0.0.1`, backend dan Ollama juga mendengar di `127.0.0.1`.
+- Backend berjalan sebagai akun `aidmc` tanpa hak login, dengan pembatasan systemd (tidak bisa menulis ke folder sistem atau membaca folder home).
+- `.env` hanya bisa dibaca admin server (pemiliknya), root, dan `aidmc`. Folder `storage/` hanya bisa dibaca `aidmc` dan root. Berkas cadangan hanya bisa dibaca root.
 - SSH hanya dengan kunci, hanya untuk admin server.
-- `.env`, folder `storage/`, dan berkas cadangan hanya bisa dibaca admin server.
 - Pasang pembaruan keamanan Ubuntu secara rutin (`unattended-upgrades`).
 - Aturan lengkap ada di Kebijakan Data dan Keamanan.
 
-## 9. Pekerjaan yang harus selesai sebelum server dipakai
+## 9. Yang sudah dan belum teruji
 
-Sumber: Kebutuhan Server Bagian 6. Diulang di sini supaya pengelola tahu langkah mana yang belum bisa dijalankan.
+Sudah diuji, 22 November 2026:
 
-1. **PaddleOCR belum masuk image backend.** `backend/requirements-pipeline.lock` belum memuat `paddlepaddle` dan `paddleocr`. Tanpa itu, dokumen scan dan foto gagal di container.
-2. **Cache model PaddleOCR belum disimpan di volume.** Model diunduh ulang setiap container dibuat ulang.
-3. **Reverse proxy dan HTTPS belum ada di Compose.** Contoh Caddy di Bagian 4 masih usulan.
-4. **Skrip cadangan belum ada di repo.** Contoh di Bagian 6 masih usulan.
-5. **Image belum pernah dibangun dan dijalankan.**
-6. **Antrean belum permanen.** Restart saat ada dokumen diproses membuat dokumen itu gagal.
+- **Pemasangan dependensi di Ubuntu 24.04** (container bersih, PaddlePaddle versi CPU): semua paket terpasang tanpa konflik, uji bawaan PaddlePaddle lulus, dan backend, perintah `kelola`, serta pipeline bisa dimuat. Dari uji ini ditemukan pustaka `libgomp1` yang wajib ada; sudah masuk skrip.
+- **Cadangan dan pemulihan**: `cadangan.sh` dijalankan terhadap database pengembangan, lalu dump dipulihkan ke PostgreSQL 17 kosong. Jumlah baris semua tabel sama, dan pelindung log audit ikut pulih.
+- **Konfigurasi Compose**: tanpa profil hanya menyalakan `db` dan `frontend`.
 
-Setelah poin 1 sampai 5 selesai dan diuji, tanda "(belum diuji)" di panduan ini perlu diperbarui.
+Belum diuji, baru bisa setelah server tersedia:
+
+1. Layanan systemd backend dan perintah `kelola` di server sungguhan.
+2. PaddlePaddle versi GPU dan OCR di Linux dengan dokumen scan.
+3. Caddy dan HTTPS dengan domain kampus.
+4. Seluruh alur dari unggah sampai verifikasi lewat domain.
+
+Batasan yang tetap ada:
+
+- **Antrean belum permanen.** Restart saat ada dokumen diproses membuat dokumen itu gagal.
+- **Backend di Docker belum lengkap.** Service `backend` di `docker-compose.yml` hanya menyala dengan `--profile backend-docker` dan image-nya belum memuat PaddleOCR. Jalur ini tidak dipakai untuk server.
+
+Setelah butir "Belum diuji" selesai di server, perbarui bagian ini.

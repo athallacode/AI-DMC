@@ -31,8 +31,8 @@ Perkiraan beban (bukan hasil ukur):
 |---|---|---|
 | Ubuntu Server | 24.04 LTS | Atau 22.04 LTS |
 | Driver NVIDIA | Sesuai GPU | Cek dengan `nvidia-smi` |
-| Docker Engine + Docker Compose | Terbaru stabil | |
-| NVIDIA Container Toolkit | Terbaru stabil | Supaya container bisa memakai GPU |
+| Docker Engine + Docker Compose | Terbaru stabil | Hanya untuk PostgreSQL dan frontend |
+| Python 3.12 | Bawaan Ubuntu 24.04 | Backend dan pipeline AI, dipasang oleh `deploy/pasang-backend.sh` |
 | Ollama | Terbaru stabil | Model `gemma4:e4b` diunduh sekali (6,6 GB) |
 | Reverse proxy | Caddy atau Nginx | HTTPS dan satu pintu masuk |
 
@@ -58,39 +58,45 @@ Unduhan pertama butuh internet: image Docker, model Ollama, dan model PaddleOCR 
 - [ ] Keputusan taksonomi: SK pembimbing TA dan berita acara sidang masuk Pendidikan (PND) atau Penunjang (PNJ).
 - [ ] Logo resmi untuk tampilan aplikasi.
 
-## 6. Kesiapan kode untuk deploy
+## 6. Susunan dan kesiapan kode
+
+Susunan server sama dengan laptop pengembang: **PostgreSQL dan frontend di Docker, backend (dengan PaddleOCR), Ollama, dan Caddy langsung di Ubuntu.** Backend tidak dimasukkan ke Docker supaya PaddleOCR dan Ollama memakai GPU host tanpa image CUDA dan NVIDIA Container Toolkit.
 
 Sudah ada:
 
-- `docker-compose.yml` berisi PostgreSQL 17, backend, dan frontend. Port hanya dibuka ke `127.0.0.1`.
-- `backend/Dockerfile` (Python 3.12, migrasi Alembic otomatis saat start, 1 worker) dan `frontend/Dockerfile` (Next.js standalone).
+- `docker-compose.yml`: PostgreSQL 17 dan frontend, port hanya dibuka ke `127.0.0.1`. Service `backend` hanya menyala dengan `--profile backend-docker` dan tidak dipakai di server.
+- `deploy/pasang-backend.sh`: memasang backend, PaddlePaddle GPU, PaddleOCR, layanan systemd, dan perintah `kelola`.
+- `deploy/cadangan.sh` dan `deploy/Caddyfile.contoh`.
 - Backend menolak `APP_ENVIRONMENT=production` kalau pipeline masih mode mock.
 
-Belum ada atau belum diuji (wajib sebelum deploy):
+Sudah diuji (22 November 2026): pemasangan dependensi di Ubuntu 24.04 (PaddlePaddle versi CPU), serta cadangan dan pemulihan database.
 
-1. **PaddleOCR belum masuk image backend.** `backend/requirements-pipeline.lock` tidak memuat `paddlepaddle` dan `paddleocr`, jadi dokumen scan dan foto akan gagal di container. Perlu ditambah, idealnya versi GPU dengan base image CUDA.
-2. **Cache model PaddleOCR belum disimpan di volume.** Tanpa volume, model diunduh ulang setiap container dibuat ulang.
-3. **Ollama belum ada di Compose.** Sekarang backend memanggil Ollama di host lewat `host.docker.internal`. Pilih: pasang Ollama di host, atau tambahkan service `ollama` dengan akses GPU.
-4. **`OLLAMA_HOST` harus berupa URL lengkap** (contoh `http://host.docker.internal:11434`). Nilai seperti `0.0.0.0:11434` membuat pipeline gagal menghubungi Ollama.
-5. **Belum ada reverse proxy dan HTTPS** di Compose.
-6. **Belum ada skrip backup** untuk database (`pg_dump`) dan folder `storage/`.
-7. **Image belum pernah dibangun dan dijalankan di server** (tugas P2-19 dan B-08).
-8. **Antrean belum permanen.** Backend memakai 1 worker dan background task. Restart server saat ada dokumen diproses membuat dokumen itu berstatus gagal.
+Belum diuji, baru bisa setelah server ada:
+
+1. Layanan systemd dan perintah `kelola` di server sungguhan.
+2. PaddlePaddle versi GPU dan OCR dokumen scan di Linux.
+3. Caddy dan HTTPS dengan domain kampus.
+4. Seluruh alur unggah sampai verifikasi lewat domain.
+
+Batasan yang tetap ada: **antrean belum permanen.** Backend memakai 1 worker dan background task. Restart saat ada dokumen diproses membuat dokumen itu berstatus gagal.
 
 ## 7. Urutan deploy
 
-1. Pasang Ubuntu, driver NVIDIA, Docker, NVIDIA Container Toolkit. Cek `nvidia-smi` dan `docker run --gpus all ... nvidia-smi`.
-2. Pasang Ollama, jalankan `ollama pull gemma4:e4b`, cek modelnya muat penuh di GPU (`ollama ps`).
-3. Ambil kode dari repo, salin `.env.example` menjadi `.env`, isi rahasia baru: `POSTGRES_PASSWORD`, `JWT_SECRET`, `SEED_PASSWORD`. Atur `APP_ENVIRONMENT=production`, `PIPELINE_MODE=real`, `OLLAMA_HOST`, `CORS_ORIGINS` dan `NEXT_PUBLIC_API_URL` sesuai domain.
-4. Bereskan poin 1 sampai 5 di Bagian 6.
-5. `docker compose up -d --build`, lalu cek migrasi berhasil dan `/health` menjawab.
-6. Uji 10 dokumen sintetis campuran (digital, scan, foto, DOCX) sebelum memakai data asli.
-7. Buat akun 50 dosen, nonaktifkan akun dummy.
-8. Pasang backup harian dan coba pulihkan sekali.
-9. Uji coba dengan beberapa dosen dulu, baru dibuka untuk semua.
+Langkah lengkap ada di Panduan Instalasi dan Operasional, Bagian 4. Ringkasnya:
+
+1. Pasang Ubuntu, driver NVIDIA, dan Docker. Cek `nvidia-smi`.
+2. Pasang Ollama, `ollama pull gemma4:e4b`, cek modelnya muat penuh di GPU (`ollama ps`).
+3. Ambil kode ke `/opt/ai-dmc`, salin `.env.example` menjadi `.env`, isi rahasia baru dan nilai untuk server.
+4. `docker compose up -d --build` untuk PostgreSQL dan frontend.
+5. `sudo sh deploy/pasang-backend.sh` untuk backend, lalu cek `/health`.
+6. Pasang Caddy dengan `deploy/Caddyfile.contoh`.
+7. Buat akun admin lewat `sudo kelola akun buat --peran admin`.
+8. Pasang cadangan harian dan coba pulihkan sekali.
+9. Uji 10 dokumen sintetis campuran (digital, scan, foto, DOCX) sebelum memakai data asli.
+10. Buat akun dosen dari CSV, uji coba dengan beberapa dosen dulu, baru dibuka untuk semua.
 
 ## 8. Setelah berjalan
 
-- Backup harian: `pg_dump` database dan salinan `storage/`. Simpan minimal 7 hari terakhir.
+- Backup harian dengan `deploy/cadangan.sh`: database dan `storage/`, disimpan 7 hari terakhir.
 - Pantau ruang disk, dokumen berstatus gagal, dan waktu proses per dokumen.
 - Sebelum restart atau update, pastikan tidak ada dokumen berstatus "diproses".
