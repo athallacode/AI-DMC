@@ -15,6 +15,7 @@ Semua pemrosesan AI berjalan di server lokal. Tidak ada dokumen yang dikirim ke 
 | [docs/PANDUAN_DOSEN.md](docs/PANDUAN_DOSEN.md) | Panduan penggunaan aplikasi untuk dosen |
 | [docs/PANDUAN_ADMIN.md](docs/PANDUAN_ADMIN.md) | Perintah pengelola `app.kelola`: akun, dokumen gagal, SK bersama |
 | [docs/PANDUAN_INSTALASI.md](docs/PANDUAN_INSTALASI.md) | Instalasi laptop dan server, operasional, cadangan, pemecahan masalah |
+| [docs/BUKU_PENGEMBANGAN.md](docs/BUKU_PENGEMBANGAN.md) | Untuk pengembang lanjutan: cara kerja kode, resep perubahan, pengujian, pekerjaan yang belum selesai |
 | [AGENTS.md](AGENTS.md) | Aturan untuk AI coding agent (Codex, Claude Code) |
 | `.agents/skills/ai-dmc-apple-glass-ui/` | Panduan desain UI (Apple light + glass) |
 
