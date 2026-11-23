@@ -89,6 +89,19 @@ async def impor_akun(berkas: Annotated[UploadFile, File()], user: User = Depends
     return {'dibuat': [{'username': u.username, 'nama': u.nama, 'password': p} for u, p in hasil], 'dilewati': gagal}
 
 
+class UbahAkun(BaseModel):
+    nama: str | None = Field(default=None, max_length=200)
+    nip: str | None = Field(default=None, max_length=64)
+
+
+@router.patch('/akun/{user_id}')
+def ubah_akun(user_id: str, body: UbahAkun, user: User = Depends(admin_saja), db: Session = Depends(get_db)):
+    target = akun_dari_id(db, user_id)
+    berubah = galat_400(lambda: admin.ubah_akun(db, target, pelaku(user), nama=body.nama, nip=body.nip, via='laman_admin'))
+    db.commit()
+    return {'username': target.username, 'nama': target.nama, 'nip': target.nip, 'berubah': berubah}
+
+
 @router.post('/akun/{user_id}/reset-password')
 def reset_password(user_id: str, user: User = Depends(admin_saja), db: Session = Depends(get_db)):
     target = akun_dari_id(db, user_id)

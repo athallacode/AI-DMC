@@ -171,3 +171,33 @@ def test_kembalikan_dokumen_ditolak(context):
     with sessions() as db:
         log = db.scalar(select(AuditLog).where(AuditLog.aksi == 'kelola_batal_tolak'))
         assert str(log.document_id) == identifier and log.detail['oleh'] == 'admin (admin)'
+
+
+def test_ubah_nama_dan_nip_akun(context):
+    client, sessions, users = context
+    admin = headers(users[2])
+    target = f'/admin/akun/{users[0].id}'
+    assert client.patch(target, headers=headers(users[1]), json={'nama': 'X'}).status_code == 403
+
+    hasil = client.patch(target, headers=admin, json={'nama': '  Dosen Satu Benar ', 'nip': '1980123'})
+    assert hasil.status_code == 200
+    assert hasil.json()['berubah'] == ['nama', 'nip'] and hasil.json()['nama'] == 'Dosen Satu Benar'
+    akun = {a['username']: a for a in client.get('/admin/akun', headers=admin).json()}
+    assert akun['dosen1']['nama'] == 'Dosen Satu Benar' and akun['dosen1']['nip'] == '1980123'
+    assert client.get('/auth/me', headers=headers(users[0])).json()['nama'] == 'Dosen Satu Benar'
+
+    # NIP milik akun lain, nama kosong, dan perubahan yang sama persis ditolak dengan pesan jelas.
+    dipakai = client.patch(target, headers=admin, json={'nip': 'dosen2'})
+    assert dipakai.status_code == 400 and 'sudah dipakai' in dipakai.json()['detail']
+    assert client.patch(target, headers=admin, json={'nama': '   '}).status_code == 400
+    sama = client.patch(target, headers=admin, json={'nama': 'Dosen Satu Benar'})
+    assert sama.status_code == 400 and 'Tidak ada yang diubah' in sama.json()['detail']
+    # NIP boleh dikosongkan, dan hanya nama yang dikirim tidak mengubah NIP.
+    assert client.patch(target, headers=admin, json={'nip': ''}).json()['nip'] is None
+    assert client.patch(target, headers=admin, json={'nama': 'Dosen Satu'}).json()['nip'] is None
+    assert client.patch(f'/admin/akun/{uuid.uuid4()}', headers=admin, json={'nama': 'X'}).status_code == 404
+
+    with sessions() as db:
+        log = db.scalars(select(AuditLog).where(AuditLog.aksi == 'kelola_ubah_akun').order_by(AuditLog.created_at)).all()
+        assert [r.detail['kolom'] for r in log] == [['nama', 'nip'], ['nip'], ['nama']]
+        assert all(str(r.user_id) == str(users[0].id) for r in log)

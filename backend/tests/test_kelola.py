@@ -115,3 +115,15 @@ def test_daftar_ditolak_dan_kembalikan(k, capsys):
         assert db.get(Document, uuid.UUID(identifier)).status == 'menunggu_verifikasi'
     assert kelola.main(['dokumen', 'kembalikan', identifier, '--oleh', 'A']) == 1
     assert 'Hanya dokumen ditolak' in capsys.readouterr().err
+
+
+def test_ubah_akun(k, capsys):
+    client, sessions, users = k
+    assert kelola.main(['akun', 'ubah', 'dosen1', '--nip', '1980999', '--oleh', 'A']) == 0
+    assert 'nip' in capsys.readouterr().out
+    with sessions() as db:
+        assert db.scalar(select(User).where(User.username == 'dosen1')).nip == '1980999'
+    assert kelola.main(['akun', 'ubah', 'dosen2', '--nip', '1980999', '--oleh', 'A']) == 1
+    assert 'sudah dipakai' in capsys.readouterr().err
+    assert kelola.main(['akun', 'ubah', 'dosen1', '--oleh', 'A']) == 1
+    assert '--nama' in capsys.readouterr().err

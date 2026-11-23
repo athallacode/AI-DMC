@@ -61,6 +61,15 @@ def akun_impor(args):
             print('  ' + g)
 
 
+def akun_ubah(args):
+    if args.nama is None and args.nip is None:
+        raise Galat('Sebutkan --nama dan/atau --nip yang baru. Pakai --nip "" untuk mengosongkan NIP.')
+    with SessionLocal() as db:
+        berubah = admin.ubah_akun(db, admin.cari_akun(db, args.username), args.oleh, nama=args.nama, nip=args.nip, via='perintah')
+        db.commit()
+    print(f'Akun "{args.username}" diubah: {", ".join(berubah)}.')
+
+
 def akun_reset_password(args):
     with SessionLocal() as db:
         password = admin.reset_password(db, admin.cari_akun(db, args.username), args.oleh, via='perintah')
@@ -146,6 +155,11 @@ def susun_parser() -> argparse.ArgumentParser:
     sp.add_argument('berkas')
     sp.add_argument('--keluar', required=True, help='Berkas CSV untuk menampung password awal')
     oleh(sp); sp.set_defaults(fungsi=akun_impor)
+    sp = akun.add_parser('ubah', help='Ubah nama dan/atau NIP akun')
+    sp.add_argument('username')
+    sp.add_argument('--nama')
+    sp.add_argument('--nip', help='NIP baru; "" untuk mengosongkan')
+    oleh(sp); sp.set_defaults(fungsi=akun_ubah)
     sp = akun.add_parser('reset-password', help='Buat password baru')
     sp.add_argument('username')
     oleh(sp); sp.set_defaults(fungsi=akun_reset_password)

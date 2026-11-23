@@ -86,6 +86,33 @@ def impor_akun(db, isi_csv: str, oleh, **detail) -> tuple[list[tuple[User, str]]
     return hasil, gagal
 
 
+def ubah_akun(db, user: User, oleh, nama=None, nip=None, **detail) -> list[str]:
+    """Ubah nama dan/atau NIP akun. `None` artinya tidak diubah; NIP berupa string kosong artinya dikosongkan.
+
+    NIP dipakai untuk menautkan dosen ke dokumen yang menyebut namanya. Mengubahnya hanya berpengaruh
+    ke dokumen yang diproses sesudahnya; tautan yang sudah ada tidak berubah.
+    """
+    berubah = []
+    if nama is not None:
+        nama = nama.strip()
+        if not nama:
+            raise Galat('Nama tidak boleh kosong.')
+        if nama != user.nama:
+            user.nama = nama
+            berubah.append('nama')
+    if nip is not None:
+        nip = nip.strip() or None
+        if nip and db.scalar(select(User).where(User.nip == nip, User.id != user.id)):
+            raise Galat(f'NIP {nip} sudah dipakai akun lain.')
+        if nip != user.nip:
+            user.nip = nip
+            berubah.append('nip')
+    if not berubah:
+        raise Galat('Tidak ada yang diubah.')
+    catat(db, user.id, 'ubah_akun', oleh, kolom=berubah, **detail)
+    return berubah
+
+
 def reset_password(db, user: User, oleh, **detail) -> str:
     password = buat_password()
     user.password_hash = hash_password(password)

@@ -17,7 +17,7 @@ const LABEL_AKSI: Record<string, string> = {
   login: 'Masuk', login_gagal: 'Gagal masuk', upload: 'Unggah dokumen', unduh: 'Unduh dokumen', approve: 'Setujui dokumen',
   reject: 'Tolak dokumen', koreksi: 'Koreksi dokumen', kelola_buat_akun: 'Akun dibuat', kelola_reset_password: 'Password direset',
   kelola_tutup_akun: 'Akun ditutup', kelola_proses_ulang: 'Dokumen diproses ulang', kelola_tautkan: 'Dosen ditautkan',
-  kelola_batal_tolak: 'Penolakan dibatalkan',
+  kelola_batal_tolak: 'Penolakan dibatalkan', kelola_ubah_akun: 'Akun diubah',
 };
 const waktu = (value: string) => new Intl.DateTimeFormat('id-ID', { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(value));
 
@@ -36,6 +36,7 @@ export default function AdminPage() {
 
 function AkunTab({ me, setError, setNotice }: { me: User; setError: (v: string) => void; setNotice: (v: string) => void }) {
   const [akun, setAkun] = useState<Akun[]>([]); const [loading, setLoading] = useState(true); const [cari, setCari] = useState(''); const [tambah, setTambah] = useState(false);
+  const [ubah, setUbah] = useState<Akun | null>(null);
   const [konfirmasi, setKonfirmasi] = useState<{ akun: Akun; aksi: 'reset' | 'tutup' } | null>(null); const [password, setPassword] = useState<Password | null>(null); const [busy, setBusy] = useState(false);
   const berkas = useRef<HTMLInputElement>(null);
   const muat = useCallback(() => { setLoading(true); api<Akun[]>('/admin/akun').then(setAkun).catch(e => setError(e.message)).finally(() => setLoading(false)); }, [setError]);
@@ -63,10 +64,12 @@ function AkunTab({ me, setError, setNotice }: { me: User; setError: (v: string) 
     {!loading && shown.length === 0 ? <Empty title="Tidak ada akun" text="Tidak ada akun yang cocok dengan pencarian." /> :
       <ul className="card admin-list">{shown.map(a => <li key={a.id}><div className="list-text"><strong>{a.nama}</strong><span className="meta">{a.username} · {a.nip ? `NIP ${a.nip}` : 'Tanpa NIP'} · {a.jumlah_dokumen} dokumen</span></div>
         <div className="admin-row-end">{a.peran === 'admin' && <span className="status diproses">Admin</span>}{a.ditutup ? <span className="status ditolak">Ditutup</span> : <span className="status terverifikasi">Aktif</span>}
+          <span className="admin-row-actions"><button className="text-button admin-edit" onClick={() => setUbah(a)}>Ubah</button>
           <button className="text-button" onClick={() => setKonfirmasi({ akun: a, aksi: 'reset' })}>{a.ditutup ? 'Buka lagi' : 'Reset password'}</button>
-          {a.id === me.id ? <span className="meta admin-slot">Akun Anda</span> : a.ditutup ? <span className="admin-slot" aria-hidden="true" /> : <button className="destructive admin-slot" onClick={() => setKonfirmasi({ akun: a, aksi: 'tutup' })}>Tutup</button>}</div></li>)}</ul>}
+          {a.id === me.id ? <span className="meta admin-slot">Akun Anda</span> : a.ditutup ? <span className="admin-slot" aria-hidden="true" /> : <button className="destructive admin-slot" onClick={() => setKonfirmasi({ akun: a, aksi: 'tutup' })}>Tutup</button>}</span></div></li>)}</ul>}
     <details className="admin-help"><summary>Format CSV untuk impor</summary><p className="meta">Kolom <code>username</code> dan <code>nama</code> wajib, <code>nip</code> dan <code>peran</code> boleh kosong. Simpan dari Excel sebagai CSV UTF-8. Baris yang bermasalah dilewati, baris lain tetap dibuat.</p></details>
     {tambah && <TambahAkun onClose={() => setTambah(false)} onDone={p => { setTambah(false); setPassword(p); muat(); }} />}
+    {ubah && <UbahAkun akun={ubah} onClose={() => setUbah(null)} onDone={teks => { setUbah(null); setNotice(teks); muat(); }} />}
     {konfirmasi && <Modal title={konfirmasi.aksi === 'tutup' ? 'Tutup akun?' : konfirmasi.akun.ditutup ? 'Buka lagi akun ini?' : 'Reset password?'} onClose={() => setKonfirmasi(null)}>
       <p>{konfirmasi.akun.nama} ({konfirmasi.akun.username})</p>
       <p className="meta">{konfirmasi.aksi === 'tutup' ? 'Akun tidak bisa dipakai masuk lagi. Dokumennya tetap tersimpan. Sesi yang sedang terbuka tetap berlaku paling lama 60 menit.' : 'Password lama tidak berlaku lagi. Password baru tampil sekali setelah ini.'}</p>
@@ -87,6 +90,19 @@ function TambahAkun({ onClose, onDone }: { onClose: () => void; onDone: (p: Pass
     <label>NIP<input name="nip" inputMode="numeric" /></label><label>Peran<span className="select-wrap"><select name="peran" defaultValue="dosen"><option value="dosen">Dosen</option><option value="admin">Admin</option></select><ChevronDown size={16} aria-hidden="true" /></span></label></div>
     <p className="meta">NIP wajib untuk dosen supaya bisa tertaut ke dokumen yang menyebut namanya. Password awal dibuat otomatis.</p>
     <ErrorMessage message={error} /><div className="form-actions"><button type="button" className="neutral" onClick={onClose}>Batal</button><button className="primary" disabled={busy}>{busy ? 'Menyimpan…' : 'Buat akun'}</button></div></form></Modal>;
+}
+
+function UbahAkun({ akun, onClose, onDone }: { akun: Akun; onClose: () => void; onDone: (teks: string) => void }) {
+  const [error, setError] = useState(''); const [busy, setBusy] = useState(false);
+  async function submit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault(); setError(''); setBusy(true); const data = new FormData(event.currentTarget);
+    try { await api(`/admin/akun/${akun.id}`, { method: 'PATCH', body: JSON.stringify({ nama: data.get('nama'), nip: data.get('nip') }) }); onDone(`Akun ${akun.username} diperbarui.`); }
+    catch (e) { setError(e instanceof Error ? e.message : 'Perubahan belum tersimpan.'); } finally { setBusy(false); }
+  }
+  return <Modal title="Ubah akun" onClose={onClose}><p className="meta">Username {akun.username} tidak bisa diubah.</p><form onSubmit={submit}><div className="form-grid">
+    <label>Nama lengkap<input name="nama" defaultValue={akun.nama} {...required} autoFocus /></label><label>NIP<input name="nip" defaultValue={akun.nip || ''} inputMode="numeric" placeholder="Kosongkan kalau tidak ada" /></label></div>
+    <p className="meta">NIP dipakai untuk menautkan dosen ke dokumen yang menyebut namanya. Perubahan NIP berlaku untuk dokumen yang diunggah sesudahnya; tautan yang sudah ada tidak berubah.</p>
+    <ErrorMessage message={error} /><div className="form-actions"><button type="button" className="neutral" onClick={onClose}>Batal</button><button className="primary" disabled={busy}>{busy ? 'Menyimpan…' : 'Simpan'}</button></div></form></Modal>;
 }
 
 function PasswordModal({ data, onClose }: { data: Password; onClose: () => void }) {
