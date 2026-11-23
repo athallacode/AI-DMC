@@ -21,6 +21,7 @@ from app.main import app
 from app.models import AuditLog, Correction, Document, DocumentLecturer, User
 from app.security import create_token, hash_password
 import app.main as main_module
+import app.api.auth as auth_module
 import app.services.pipeline as pipeline
 
 
@@ -40,6 +41,7 @@ def context(tmp_path, monkeypatch):
         with sessions() as db:
             yield db
     app.dependency_overrides[get_db] = override_db
+    auth_module.pembatas.reset()
     users = []
     with sessions() as db:
         for username, role in [('dosen1', 'dosen'), ('dosen2', 'dosen'), ('admin', 'admin')]:
@@ -72,6 +74,34 @@ def test_login_health_and_authorization(context):
     assert response.status_code == 200
     assert response.json()['user']['username'] == 'dosen1'
     assert client.get('/auth/me', headers={'Authorization': 'Bearer ' + response.json()['access_token']}).json()['id'] == str(users[0].id)
+
+
+def test_login_locked_after_repeated_failures(context, monkeypatch):
+    client, sessions, users = context
+    sekarang = [1000.0]
+    monkeypatch.setattr(auth_module.time, 'monotonic', lambda: sekarang[0])
+    login = lambda username, password: client.post('/auth/login', json={'username': username, 'password': password})
+    for _ in range(5):
+        assert login('dosen1', 'salah').status_code == 401
+    # Terkunci: password benar pun ditolak, dengan pesan yang bisa dibaca dosen.
+    terkunci = login('dosen1', 'test-password')
+    assert terkunci.status_code == 429 and '15 menit' in terkunci.json()['detail']
+    assert login('DOSEN1', 'test-password').status_code == 429
+    # Akun lain tidak ikut terkunci.
+    assert login('dosen2', 'test-password').status_code == 200
+    # Username tak terdaftar diperlakukan sama, tanpa membocorkan bahwa akunnya tidak ada.
+    for _ in range(5):
+        assert login('tidak-ada', 'x').status_code == 401
+    assert login('tidak-ada', 'x').status_code == 429
+    # Setelah 15 menit, bisa masuk lagi, dan login berhasil menghapus hitungan gagal.
+    sekarang[0] += 15 * 60 + 1
+    assert login('dosen1', 'test-password').status_code == 200
+    for _ in range(4):
+        assert login('dosen1', 'salah').status_code == 401
+    assert login('dosen1', 'test-password').status_code == 200
+    with sessions() as db:
+        aksi = [r.aksi for r in db.scalars(select(AuditLog).where(AuditLog.user_id == users[0].id))]
+        assert aksi.count('login_gagal') == 9 and aksi.count('login') == 2
 
 
 def test_pipeline_outcomes_filters_and_duplicate_privacy(context):
