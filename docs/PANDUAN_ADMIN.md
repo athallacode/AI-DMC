@@ -24,7 +24,7 @@ Laman Admin punya tiga bagian:
 | Bagian | Isi |
 |---|---|
 | **Akun** | Daftar semua akun dengan jumlah dokumen dan status Aktif atau Ditutup. Tombol **Tambah akun**, **Impor CSV**, **Reset password**, dan **Tutup**. Akun yang ditutup dibuka lagi dengan **Buka lagi** (membuat password baru) |
-| **Dokumen** | Dokumen gagal dengan tombol **Proses ulang**. Bagian **SK bersama**: cari dokumen berdasarkan nama berkas, lalu **Tautkan dosen** |
+| **Dokumen** | Dokumen gagal dengan tombol **Proses ulang**. Dokumen ditolak dengan tombol **Kembalikan ke Kotak Verifikasi**. Bagian **SK bersama**: cari dokumen berdasarkan nama berkas, lalu **Tautkan dosen** |
 | **Log aktivitas** | 200 aktivitas terakhir (masuk, unggah, setujui, pengelolaan akun) dan tombol **Unduh riwayat koreksi** |
 
 Hal yang perlu diperhatikan:
@@ -154,6 +154,16 @@ kelola dokumen proses-ulang 1f2e3d4c-0000-4000-8000-123456789abc --oleh "Nama Pe
 - Perintah menunggu sampai selesai, bisa beberapa menit untuk dokumen scan.
 - Setelah selesai, dokumen masuk arsip atau Kotak Verifikasi dosen seperti unggahan biasa.
 
+### Mengembalikan dokumen yang salah ditolak
+
+```
+kelola dokumen ditolak
+kelola dokumen kembalikan 1f2e3d4c-0000-4000-8000-123456789abc --oleh "Nama Pengelola"
+```
+
+- Dokumen kembali berstatus Menunggu verifikasi dan muncul lagi di Kotak Verifikasi pengunggah.
+- Dosen tertaut baru bisa melihatnya lagi setelah pengunggah menyetujui ulang.
+
 ### SK bersama: menautkan dosen lain ke dokumen
 
 Berkas yang persis sama hanya disimpan sekali. Kalau dosen B mendapat pesan "Sudah pernah diunggah" untuk SK yang sudah diunggah dosen A, tautkan dosen B ke dokumen milik A:
@@ -178,7 +188,7 @@ Dosen yang NIP-nya tertulis di dokumen sebenarnya tertaut otomatis setelah pengu
 | "Terlalu banyak percobaan masuk yang gagal" | Akun terkunci 15 menit setelah 5 kali salah password. Minta dosen menunggu. Kalau dosen yakin bukan dia yang mencoba, cek aktivitas "Gagal masuk" di Log aktivitas dan reset password-nya |
 | Dokumen berstatus Gagal | Laman Admin, Dokumen, **Proses ulang** (atau `dokumen proses-ulang`) |
 | "Sudah pernah diunggah" padahal belum | Laman Admin, Dokumen, SK bersama: cari nama berkasnya, lalu **Tautkan dosen** (atau `dokumen tautkan`) |
-| Salah menolak dokumen | Belum ada perintah. Catat kode dokumennya dan teruskan ke Admin CoE; perubahan status lewat database hanya dengan persetujuan Admin CoE |
+| Salah menolak dokumen | Laman Admin, Dokumen, Dokumen ditolak: **Kembalikan ke Kotak Verifikasi** (atau `dokumen kembalikan`). Dokumen muncul lagi di Kotak Verifikasi dosen untuk diperiksa ulang |
 | Minta dokumen dihapus | Belum ada perintah. Catat permintaannya, putuskan bersama Admin CoE sesuai Kebijakan Data |
 | Hasil AI sering salah untuk jenis tertentu | Catat contoh dokumen dan jenis yang benar, teruskan ke tim pengembang |
 
@@ -237,7 +247,7 @@ Di log audit, aksi lewat perintah `kelola` bernama `kelola_...`. Kolom `user_id`
 
 ## 7. Batasan saat ini
 
-- Belum ada fitur untuk menghapus dokumen, membatalkan status Ditolak, mengubah tingkat akses dokumen, atau mengubah nama dan NIP akun.
+- Belum ada fitur untuk menghapus dokumen, mengubah tingkat akses dokumen, atau mengubah nama dan NIP akun.
 - Akun ditutup dengan mengganti password secara acak, bukan dengan status nonaktif.
 - Sesi akun yang ditutup tetap berlaku sampai habis, paling lama 60 menit.
 

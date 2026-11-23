@@ -38,7 +38,7 @@ Acuan rancangan: DOK-CoE-AIIS-DMC-001 v0.1 (Rancangan Sistem AI-DMC).
 | Laman Arsip dengan filter kategori, status, tahun | Selesai |
 | Koreksi dosen disimpan sebagai bahan perbaikan AI | Selesai. Riwayat bisa diekspor admin |
 
-Tambahan di luar daftar MVP: laman Admin dan perintah pengelola `app.kelola` (akun, dokumen gagal, SK bersama, log aktivitas), log audit yang tidak bisa diubah, pertahanan prompt injection, tampilan HP, berkas deploy server, antrean pemrosesan yang dilanjutkan otomatis setelah restart, batas percobaan login, dan penyaring nomor serta tanggal dokumen yang tidak tertulis di teks.
+Tambahan di luar daftar MVP: laman Admin dan perintah pengelola `app.kelola` (akun, dokumen gagal, SK bersama, log aktivitas), log audit yang tidak bisa diubah, pertahanan prompt injection, tampilan HP, berkas deploy server, antrean pemrosesan yang dilanjutkan otomatis setelah restart, batas percobaan login, penyaring nomor serta tanggal dokumen yang tidak tertulis di teks, pengembalian dokumen yang salah ditolak oleh admin, dan formulir koreksi yang tidak kehilangan isian saat sesi habis.
 
 Sesuai kesepakatan, yang tidak dikerjakan di tahap ini: SSO kampus, pencarian bahasa alami (Tanya Arsip), generator paket jabatan fungsional dan akreditasi, dasbor Ketua CoE, deteksi versi dokumen, dan antrean Celery dengan Redis.
 
@@ -131,7 +131,7 @@ Aturan lengkap, hak dosen, dan daftar celah yang belum ditutup ada di Kebijakan 
 
 | Pengujian | Hasil |
 |---|---|
-| Tes otomatis backend | 30 tes lulus: alur unggah sampai verifikasi, hak akses antardosen, duplikat, validasi berkas, ambang skor, riwayat koreksi, log audit, perintah pengelola |
+| Tes otomatis backend | 32 tes lulus: alur unggah sampai verifikasi, hak akses antardosen, duplikat, validasi berkas, ambang skor, riwayat koreksi, log audit, perintah pengelola |
 | Tes otomatis pipeline | 53 tes lulus: ekstraksi, klasifikasi, voting, penyaring prompt injection, pembersihan metadata |
 | Uji ujung ke ujung | PDF digital, PDF scan, foto, dan DOCX lewat aplikasi sampai status akhir |
 | Uji tampilan | Laman Unggah, Kotak Verifikasi, dan Arsip pada lebar 375 px dan 1280 px tanpa tampilan terpotong (UI V2 Review) |
@@ -164,7 +164,7 @@ Urut dari yang paling mendesak:
 1. **Sediakan server** sesuai Kebutuhan Server (GPU NVIDIA 12 GB, RAM 32 GB), lalu deploy mengikuti Panduan Instalasi.
 2. **Putuskan taksonomi** untuk SK pembimbing TA dan berita acara sidang.
 3. **Uji coba dengan 3 sampai 5 dosen** selama dua minggu, sambil mengumpulkan dokumen asli berlabel. Target 100 dokumen untuk evaluasi ulang, dengan sebagian disisihkan sebagai set uji yang tidak dipakai menyetel prompt.
-4. **Lengkapi fitur admin:** status akun nonaktif, hapus dokumen dan kebijakan masa simpan, serta membatalkan status Ditolak.
+4. **Lengkapi fitur admin:** status akun nonaktif, serta hapus dokumen dan kebijakan masa simpan.
 5. **Tambah batas login per alamat IP** setelah reverse proxy meneruskan IP asli.
 6. **Manfaatkan koreksi dosen** sebagai contoh di prompt (few-shot), lalu fine-tune setelah data cukup.
 7. Setelah stabil, lanjut ke fitur fase berikutnya: Tanya Arsip, generator paket jabatan fungsional dan akreditasi, dan SSO kampus.

@@ -164,7 +164,7 @@ Semua ada di `config.py` dan `.env.example`. Yang paling sering diubah: `CONFIDE
 | `app/arsip/page.tsx` | Arsip dengan filter kategori, status, tahun |
 | `app/admin/page.tsx` | Laman Admin: akun, dokumen gagal, SK bersama, log aktivitas. Menu hanya muncul untuk peran admin |
 | `components/` | Kerangka laman (`shell.tsx`), komponen dasar (`ui.tsx`), formulir koreksi (`correction.tsx`) |
-| `lib/api.ts` | Semua panggilan API, token di `sessionStorage` |
+| `lib/api.ts` | Semua panggilan API, token di `sessionStorage`. Opsi `tetapDiLaman` membuat sesi habis melempar `SesiHabis` alih-alih pindah ke laman Masuk (dipakai formulir koreksi) |
 | `lib/format.ts` | Format tanggal, status, dan label |
 
 - Desain mengikuti skill `ai-dmc-apple-glass-ui`: latar abu flat, satu warna aksen, warna dan ukuran tombol dari Apple HIG, glass hanya untuk elemen kecil yang mengambang. Baca skill itu sebelum mengubah UI.
@@ -232,7 +232,7 @@ Ubah `OLLAMA_MODEL`, unduh dengan `ollama pull`, lalu jalankan evaluasi akurasi.
 
 | Pemeriksaan | Perintah | Butuh |
 |---|---|---|
-| Tes backend (30 tes) | `cd backend`, lalu `PYTHONPATH=.. ../.venv/Scripts/python.exe -m pytest -q` | Tidak butuh PostgreSQL atau Ollama |
+| Tes backend (32 tes) | `cd backend`, lalu `PYTHONPATH=.. ../.venv/Scripts/python.exe -m pytest -q` | Tidak butuh PostgreSQL atau Ollama |
 | Tes pipeline (53 tes) | `.venv/Scripts/python.exe -m pytest pipeline/tests -q` | Tidak butuh OCR atau Ollama |
 | Tipe frontend | `cd frontend`, lalu `npm run typecheck` | |
 | Build frontend | `npm run build` | Internet untuk Google Fonts |
@@ -260,29 +260,28 @@ Diurutkan dari yang paling berdampak. Sumber lain: `docs/TINDAK_LANJUT.md` dan K
 **Fitur admin** (sekarang lewat perintah `kelola`)
 
 5. Status akun aktif dan nonaktif (sekarang akun ditutup dengan password acak).
-6. Laman Admin: tambah hapus dokumen, batalkan Ditolak, dan ubah nama atau NIP akun.
+6. Laman Admin: ubah nama atau NIP akun.
 7. Hapus dokumen dan kebijakan retensi.
-8. Membatalkan status Ditolak.
-9. Mengubah tingkat akses dokumen dari UI.
+8. Mengubah tingkat akses dokumen dari UI.
 
 Butir 5 dan 7 mengubah skema dan kontrak.
 
 **Akurasi AI**
 
-10. Aturan tanggal berita acara sudah ada di prompt, tetapi belum terbukti pada dokumen asli: teks sintetis dengan tanggal formulir di kop sudah benar dengan prompt lama maupun baru. Perlu contoh dokumen asli yang salah.
-11. Penyaring nomor dan tanggal bisa mengosongkan nilai yang benar kalau OCR salah baca (misalnya huruf O dibaca angka 0). Pantau lewat koreksi dosen.
-12. Contoh di prompt untuk jenis yang masih tertukar (surat tugas asesor, narasumber, reviewer).
-13. Fine-tune (LoRA) ditunda sampai ada sekitar 100 dokumen asli berlabel. Bahannya dari tabel `koreksi`.
+9. Aturan tanggal berita acara sudah ada di prompt, tetapi belum terbukti pada dokumen asli: teks sintetis dengan tanggal formulir di kop sudah benar dengan prompt lama maupun baru. Perlu contoh dokumen asli yang salah.
+10. Penyaring nomor dan tanggal bisa mengosongkan nilai yang benar kalau OCR salah baca (misalnya huruf O dibaca angka 0). Pantau lewat koreksi dosen.
+11. Contoh di prompt untuk jenis yang masih tertukar (surat tugas asesor, narasumber, reviewer).
+12. Fine-tune (LoRA) ditunda sampai ada sekitar 100 dokumen asli berlabel. Bahannya dari tabel `koreksi`.
 
 **Kecepatan**
 
-14. OCR di GPU dan OCR hanya beberapa halaman awal (lihat `docs/TINDAK_LANJUT.md` Bagian 1).
-15. Dokumen diproses satu per satu, jadi unggahan banyak dosen sekaligus mengantre. Kecepatan di server GPU 12 GB belum diukur.
+13. OCR di GPU dan OCR hanya beberapa halaman awal (lihat `docs/TINDAK_LANJUT.md` Bagian 1).
+14. Dokumen diproses satu per satu, jadi unggahan banyak dosen sekaligus mengantre. Kecepatan di server GPU 12 GB belum diukur.
 
 **Keamanan**
 
-16. Token di `sessionStorage` (lebih aman di cookie httpOnly).
-17. Enkripsi berkas di `storage/`.
-18. Sesi habis setelah 60 menit membuat isian koreksi hilang.
+15. Token di `sessionStorage` (lebih aman di cookie httpOnly).
+16. Enkripsi berkas di `storage/`.
+17. Sesi tidak diperpanjang otomatis (tanpa refresh token). Formulir koreksi sudah menangani sesi habis, laman lain masih mengarahkan ke laman Masuk.
 
 **Di luar MVP**, jangan dikerjakan tanpa permintaan: embedding dan pencarian semantik, Tanya Arsip, generator paket dokumen (BKD, akreditasi), dan SSO kampus.

@@ -29,7 +29,7 @@ Dokumen yang AI yakini benar langsung masuk arsip. Lihat sekilas di bagian **Bar
 | Diproses | AI sedang membaca, sekitar 1 menit per dokumen | Tunggu |
 | Menunggu verifikasi | AI kurang yakin | Periksa di Verifikasi |
 | Terverifikasi | Tersimpan di arsip | Tidak ada. Masih bisa dikoreksi |
-| Ditolak | Ditolak oleh Anda | Tidak ada. Status ini final |
+| Ditolak | Ditolak oleh Anda | Tidak ada. Kalau salah tolak, hubungi pengelola |
 | Gagal | Dokumen tidak bisa diproses | Hubungi pengelola |
 
 Kategori: **PND** Pendidikan, **PNL** Penelitian, **PKM** Pengabdian kepada Masyarakat, **PUB** Publikasi dan HKI, **PNJ** Penunjang, **ADM** Administrasi Kepegawaian, **LAINNYA**.
@@ -40,8 +40,8 @@ Kategori: **PND** Pendidikan, **PNL** Penelitian, **PKM** Pengabdian kepada Masy
 |---|---|
 | Dokumen berstatus Gagal | Hubungi pengelola, sebut nama berkas dan waktu unggah |
 | "Sudah pernah diunggah", padahal belum | Mungkin SK bersama yang sudah diunggah dosen lain. Minta pengelola menautkannya ke akun Anda |
-| Salah menolak dokumen | Hubungi pengelola |
-| Tiba-tiba kembali ke laman Masuk | Sesi habis setelah 60 menit. Masuk lagi, dokumen tidak hilang |
+| Salah menolak dokumen | Hubungi pengelola, dokumen bisa dikembalikan ke Kotak Verifikasi |
+| Sesi habis (60 menit) | Masuk lagi, dokumen tidak hilang. Saat mengisi koreksi, cukup masukkan password di formulir, isian tidak hilang |
 | "Terlalu banyak percobaan masuk yang gagal" | Akun dikunci 15 menit setelah 5 kali salah password. Tunggu, lalu coba lagi |
 | Lupa password | Hubungi pengelola secara langsung atau lewat email kampus |
 

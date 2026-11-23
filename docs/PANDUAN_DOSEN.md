@@ -178,7 +178,7 @@ Buka laman **Arsip**. Secara bawaan, yang tampil adalah dokumen berstatus **Terv
 | **Diproses** | AI sedang membaca dokumen | Tunggu |
 | **Menunggu verifikasi** | AI kurang yakin | Periksa di Kotak Verifikasi |
 | **Terverifikasi** | Tersimpan di arsip | Tidak ada. Masih bisa dikoreksi lewat Periksa |
-| **Ditolak** | Ditolak oleh Anda | Tidak ada. Status ini final |
+| **Ditolak** | Ditolak oleh Anda | Tidak ada. Kalau salah tolak, hubungi pengelola |
 | **Gagal** | Dokumen tidak bisa diproses | Hubungi pengelola (lihat Bagian 9) |
 
 ## 8. Kategori dokumen
@@ -207,7 +207,7 @@ Berkas yang persis sama mungkin sudah diunggah dosen lain, misalnya SK bersama. 
 Buka Arsip, cari dokumennya di bagian Baru diarsipkan AI lalu tekan Periksa, dan perbaiki lewat form koreksi.
 
 **Saya salah menolak dokumen.**
-Status Ditolak bersifat final dan tidak bisa dibatalkan setelah lewat 3 detik. Hubungi pengelola.
+Setelah lewat 3 detik, Anda tidak bisa membatalkannya sendiri. Hubungi pengelola dengan menyebut nama berkasnya. Pengelola bisa mengembalikan dokumen itu ke Kotak Verifikasi Anda untuk diperiksa ulang.
 
 **Berapa lama dokumen saya diproses?**
 Sekitar 1 menit per dokumen, lebih lama untuk scan atau foto, dan lebih lama lagi kalau banyak dosen mengunggah bersamaan. Anda tidak perlu menunggu di laman Unggah.
@@ -222,6 +222,9 @@ Setelah 5 kali salah password, akun dikunci 15 menit untuk keamanan. Tunggu 15 m
 
 **Tiba-tiba kembali ke laman Masuk.**
 Sesi berakhir setelah 60 menit atau setelah tab ditutup. Masuk kembali. Dokumen yang sedang diproses tidak hilang.
+
+**Sesi habis saat sedang mengisi koreksi.**
+Isian Anda tidak hilang. Saat menekan **Simpan dan setujui**, muncul kotak "Sesi Anda berakhir". Masukkan password, lalu tekan **Masuk dan simpan**: koreksi langsung tersimpan. Kalau laman sempat tertutup atau dimuat ulang di tab yang sama, buka lagi formulir koreksinya dan pilih **Pakai draf**. Draf hanya tersimpan di browser Anda dan terhapus saat Anda menekan **Keluar** atau menutup tab.
 
 ## 10. Keamanan dan privasi
 
