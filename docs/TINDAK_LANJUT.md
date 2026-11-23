@@ -33,4 +33,4 @@ Catatan: sejak 23 November 2026, dokumen yang terputus restart dilanjutkan otoma
 ## 4. Keamanan dan repo
 
 - Ollama terbuka ke jaringan (`0.0.0.0:11434`) karena variabel sistem `OLLAMA_HOST`. Ubah ke `127.0.0.1:11434` lalu buka ulang Ollama. Ada dua instance Ollama berjalan.
-- Push branch `feat/ai-asli-dan-perbaikan-ui` ditolak (403): akun `sofwanrsd` hanya punya izin baca di `athallacode/AI-DMC`. Pilihan: minta akses Write, atau push lewat fork. PR ke `main` setelah push, jangan push langsung ke `main`.
+- Selesai 23 November 2026: push sempat ditolak (403) karena akun GitHub `sofwanrsd` ditangguhkan oleh GitHub, bukan karena izin. Branch `feat/ai-asli-dan-perbaikan-ui` di-push dengan akun pemilik repositori dan diajukan sebagai Pull Request ke `main`.

@@ -22,7 +22,7 @@ Pihak Pertama menyerahkan kepada Pihak Kedua hasil pengembangan AI-DMC tahap MVP
 | Commit terakhir | ................ (isi dengan hasil `git rev-parse --short HEAD` saat penandatanganan) |
 | Cara penyerahan | [ ] Push ke repositori di atas [ ] Salinan repositori (git bundle) pada media: ................ |
 
-Catatan: per 23 November 2026, branch ini belum masuk repositori di atas karena akun tim hanya punya izin baca. Selama belum di-push, kode hanya ada di laptop pengembang, sehingga salinan wajib diserahkan lewat media lain.
+Catatan: pada 23 November 2026 branch ini sudah di-push ke repositori di atas dan diajukan sebagai Pull Request ke `main`. Push sebelumnya gagal karena akun GitHub tim ditangguhkan (suspended) oleh GitHub, sehingga push dilakukan dengan akun pemilik repositori. Salinan git bundle tetap disertakan sebagai cadangan.
 
 ## 2. Dokumen
 

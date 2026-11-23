@@ -155,7 +155,7 @@ Tugas di Rincian Tugas yang belum selesai: deploy ke server (B-08), uji coba dos
 1. **Server belum tersedia.** Semua pengembangan dan pengukuran dilakukan di laptop dengan GPU 6 GB. Model AI tidak muat penuh di GPU, dan OCR berjalan di CPU.
 2. **Data asli terbatas.** Hanya 22 dokumen dari satu dosen, tanpa label lengkap.
 3. **Taksonomi belum final.** Pengelompokan beberapa jenis dokumen di rancangan berbeda dengan kebiasaan dosen.
-4. **Akses repositori.** Push ke repositori utama ditolak karena akun tim hanya punya izin baca. Semua pekerjaan ada di branch `feat/ai-asli-dan-perbaikan-ui` dan belum masuk repositori utama.
+4. **Akses repositori.** Push dari akun GitHub tim gagal karena akun itu ditangguhkan (suspended) oleh GitHub. Pada 23 November 2026 branch `feat/ai-asli-dan-perbaikan-ui` di-push dengan akun pemilik repositori dan diajukan sebagai Pull Request ke `main`.
 
 ## 10. Rekomendasi tahap berikutnya
 
@@ -185,4 +185,4 @@ Daftar lengkap pekerjaan teknis yang belum selesai ada di Buku Pengembangan Bagi
 | Buku Pengembangan | Pengembang lanjutan |
 | Laporan Akhir (dokumen ini) | Pembimbing, Ketua CoE |
 
-Kode sumber ada di branch `feat/ai-asli-dan-perbaikan-ui`. Semua dokumen di atas ada di folder `docs/`, dalam format Markdown dan PDF.
+Kode sumber ada di branch `feat/ai-asli-dan-perbaikan-ui` di github.com/athallacode/AI-DMC, diajukan sebagai Pull Request ke `main`. Semua dokumen di atas ada di folder `docs/`, dalam format Markdown dan PDF.
