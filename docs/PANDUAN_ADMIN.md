@@ -23,7 +23,7 @@ Laman Admin punya tiga bagian:
 
 | Bagian | Isi |
 |---|---|
-| **Akun** | Daftar semua akun dengan jumlah dokumen dan status Aktif atau Ditutup. Tombol **Tambah akun**, **Impor CSV**, **Reset password**, dan **Tutup**. Akun yang ditutup dibuka lagi dengan **Buka lagi** (membuat password baru) |
+| **Akun** | Daftar semua akun dengan jumlah dokumen dan status Aktif atau Ditutup. Tombol **Tambah akun**, **Impor CSV**, **Ubah** (nama dan NIP), **Reset password**, dan **Tutup**. Akun yang ditutup dibuka lagi dengan **Buka lagi** (membuat password baru) |
 | **Dokumen** | Dokumen gagal dengan tombol **Proses ulang**. Dokumen ditolak dengan tombol **Kembalikan ke Kotak Verifikasi**. Bagian **SK bersama**: cari dokumen berdasarkan nama berkas, lalu **Tautkan dosen** |
 | **Log aktivitas** | 200 aktivitas terakhir (masuk, unggah, setujui, pengelolaan akun) dan tombol **Unduh riwayat koreksi** |
 
@@ -98,6 +98,16 @@ kelola akun buat --username budi --nama "Budi Santoso" --nip 19800101 --oleh "Na
 
 3. Baris yang bermasalah (username atau NIP sudah dipakai, nama kosong) dilewati dan disebutkan di layar. Baris lain tetap dibuat.
 4. `password_awal.csv` berisi password semua akun baru. **Hapus berkas itu setelah password dibagikan** (`sudo rm password_awal.csv dosen.csv`).
+
+### Mengubah nama atau NIP
+
+```
+kelola akun ubah budi --nama "Budi Santoso, S.T., M.T." --nip 19800101 --oleh "Nama Pengelola"
+```
+
+- Boleh hanya `--nama` atau hanya `--nip`. Pakai `--nip ""` untuk mengosongkan NIP.
+- Username tidak bisa diubah.
+- Perubahan NIP berlaku untuk dokumen yang diunggah sesudahnya. Dokumen lama yang belum tertaut bisa ditautkan manual (Bagian 3).
 
 ### Dosen lupa password
 
@@ -185,6 +195,7 @@ Dosen yang NIP-nya tertulis di dokumen sebenarnya tertaut otomatis setelah pengu
 |---|---|
 | Belum punya akun | Laman Admin, Akun, **Tambah akun** (atau Bagian 2) |
 | Lupa password | Laman Admin, Akun, **Reset password** (atau `akun reset-password`) |
+| Nama atau NIP di akun salah | Laman Admin, Akun, **Ubah** (atau `akun ubah`). NIP yang benar penting supaya dosen tertaut ke dokumen yang menyebut namanya |
 | "Terlalu banyak percobaan masuk yang gagal" | Akun terkunci 15 menit setelah 5 kali salah password. Minta dosen menunggu. Kalau dosen yakin bukan dia yang mencoba, cek aktivitas "Gagal masuk" di Log aktivitas dan reset password-nya |
 | Dokumen berstatus Gagal | Laman Admin, Dokumen, **Proses ulang** (atau `dokumen proses-ulang`) |
 | "Sudah pernah diunggah" padahal belum | Laman Admin, Dokumen, SK bersama: cari nama berkasnya, lalu **Tautkan dosen** (atau `dokumen tautkan`) |
@@ -247,7 +258,7 @@ Di log audit, aksi lewat perintah `kelola` bernama `kelola_...`. Kolom `user_id`
 
 ## 7. Batasan saat ini
 
-- Belum ada fitur untuk menghapus dokumen, mengubah tingkat akses dokumen, atau mengubah nama dan NIP akun.
+- Belum ada fitur untuk menghapus dokumen atau mengubah tingkat akses dokumen.
 - Akun ditutup dengan mengganti password secara acak, bukan dengan status nonaktif.
 - Sesi akun yang ditutup tetap berlaku sampai habis, paling lama 60 menit.
 

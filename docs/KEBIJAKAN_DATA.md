@@ -141,7 +141,7 @@ Temuan dari kode per 22 November 2026, diurutkan dari yang paling penting. Dua c
 | 4 | Berkas di folder `storage/` tidak dienkripsi | Siapa pun yang memegang disk atau cadangan bisa membaca dokumen | Enkripsi disk server dan disk cadangan |
 | 5 | Belum ada fitur hapus dan masa simpan | Dokumen yang salah unggah tersimpan selamanya | Tetapkan masa simpan, buat prosedur hapus oleh pengelola |
 | 6 | Tingkat akses tidak bisa diatur dari aplikasi | Dokumen sensitif tidak bisa ditandai rahasia oleh dosen | Tambah pilihan tingkat akses di form koreksi |
-| 7 | Laman Admin belum bisa menghapus dokumen atau mengubah nama dan NIP akun | Permintaan seperti itu masih ditangani pengelola server bersama Admin CoE | Tambah laman admin sederhana |
+| 7 | Laman Admin belum bisa menghapus dokumen | Permintaan seperti itu masih ditangani pengelola server bersama Admin CoE | Tambah laman admin sederhana |
 | 8 | Belum ada HTTPS dan reverse proxy di konfigurasi deploy | Password dan dokumen lewat jaringan tanpa enkripsi | Pasang HTTPS sebelum dibuka ke dosen (lihat Kebutuhan Server) |
 | 9 | Token sesi disimpan di sessionStorage browser | Rentan dicuri kalau ada celah skrip di halaman | Pertimbangkan cookie HttpOnly saat pengembangan lanjutan |
 

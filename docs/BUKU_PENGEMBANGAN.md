@@ -232,7 +232,7 @@ Ubah `OLLAMA_MODEL`, unduh dengan `ollama pull`, lalu jalankan evaluasi akurasi.
 
 | Pemeriksaan | Perintah | Butuh |
 |---|---|---|
-| Tes backend (32 tes) | `cd backend`, lalu `PYTHONPATH=.. ../.venv/Scripts/python.exe -m pytest -q` | Tidak butuh PostgreSQL atau Ollama |
+| Tes backend (34 tes) | `cd backend`, lalu `PYTHONPATH=.. ../.venv/Scripts/python.exe -m pytest -q` | Tidak butuh PostgreSQL atau Ollama |
 | Tes pipeline (53 tes) | `.venv/Scripts/python.exe -m pytest pipeline/tests -q` | Tidak butuh OCR atau Ollama |
 | Tipe frontend | `cd frontend`, lalu `npm run typecheck` | |
 | Build frontend | `npm run build` | Internet untuk Google Fonts |
@@ -260,28 +260,27 @@ Diurutkan dari yang paling berdampak. Sumber lain: `docs/TINDAK_LANJUT.md` dan K
 **Fitur admin** (sekarang lewat perintah `kelola`)
 
 5. Status akun aktif dan nonaktif (sekarang akun ditutup dengan password acak).
-6. Laman Admin: ubah nama atau NIP akun.
-7. Hapus dokumen dan kebijakan retensi.
-8. Mengubah tingkat akses dokumen dari UI.
+6. Hapus dokumen dan kebijakan retensi.
+7. Mengubah tingkat akses dokumen dari UI.
 
-Butir 5 dan 7 mengubah skema dan kontrak.
+Butir 5 dan 6 mengubah skema dan kontrak.
 
 **Akurasi AI**
 
-9. Aturan tanggal berita acara sudah ada di prompt, tetapi belum terbukti pada dokumen asli: teks sintetis dengan tanggal formulir di kop sudah benar dengan prompt lama maupun baru. Perlu contoh dokumen asli yang salah.
-10. Penyaring nomor dan tanggal bisa mengosongkan nilai yang benar kalau OCR salah baca (misalnya huruf O dibaca angka 0). Pantau lewat koreksi dosen.
-11. Contoh di prompt untuk jenis yang masih tertukar (surat tugas asesor, narasumber, reviewer).
-12. Fine-tune (LoRA) ditunda sampai ada sekitar 100 dokumen asli berlabel. Bahannya dari tabel `koreksi`.
+8. Aturan tanggal berita acara sudah ada di prompt, tetapi belum terbukti pada dokumen asli: teks sintetis dengan tanggal formulir di kop sudah benar dengan prompt lama maupun baru. Perlu contoh dokumen asli yang salah.
+9. Penyaring nomor dan tanggal bisa mengosongkan nilai yang benar kalau OCR salah baca (misalnya huruf O dibaca angka 0). Pantau lewat koreksi dosen.
+10. Contoh di prompt untuk jenis yang masih tertukar (surat tugas asesor, narasumber, reviewer).
+11. Fine-tune (LoRA) ditunda sampai ada sekitar 100 dokumen asli berlabel. Bahannya dari tabel `koreksi`.
 
 **Kecepatan**
 
-13. OCR di GPU dan OCR hanya beberapa halaman awal (lihat `docs/TINDAK_LANJUT.md` Bagian 1).
-14. Dokumen diproses satu per satu, jadi unggahan banyak dosen sekaligus mengantre. Kecepatan di server GPU 12 GB belum diukur.
+12. OCR di GPU dan OCR hanya beberapa halaman awal (lihat `docs/TINDAK_LANJUT.md` Bagian 1).
+13. Dokumen diproses satu per satu, jadi unggahan banyak dosen sekaligus mengantre. Kecepatan di server GPU 12 GB belum diukur.
 
 **Keamanan**
 
-15. Token di `sessionStorage` (lebih aman di cookie httpOnly).
-16. Enkripsi berkas di `storage/`.
-17. Sesi tidak diperpanjang otomatis (tanpa refresh token). Formulir koreksi sudah menangani sesi habis, laman lain masih mengarahkan ke laman Masuk.
+14. Token di `sessionStorage` (lebih aman di cookie httpOnly).
+15. Enkripsi berkas di `storage/`.
+16. Sesi tidak diperpanjang otomatis (tanpa refresh token). Formulir koreksi sudah menangani sesi habis, laman lain masih mengarahkan ke laman Masuk.
 
 **Di luar MVP**, jangan dikerjakan tanpa permintaan: embedding dan pencarian semantik, Tanya Arsip, generator paket dokumen (BKD, akreditasi), dan SSO kampus.

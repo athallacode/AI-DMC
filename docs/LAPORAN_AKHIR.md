@@ -131,7 +131,7 @@ Aturan lengkap, hak dosen, dan daftar celah yang belum ditutup ada di Kebijakan 
 
 | Pengujian | Hasil |
 |---|---|
-| Tes otomatis backend | 32 tes lulus: alur unggah sampai verifikasi, hak akses antardosen, duplikat, validasi berkas, ambang skor, riwayat koreksi, log audit, perintah pengelola |
+| Tes otomatis backend | 34 tes lulus: alur unggah sampai verifikasi, hak akses antardosen, duplikat, validasi berkas, ambang skor, riwayat koreksi, log audit, perintah pengelola |
 | Tes otomatis pipeline | 53 tes lulus: ekstraksi, klasifikasi, voting, penyaring prompt injection, pembersihan metadata |
 | Uji ujung ke ujung | PDF digital, PDF scan, foto, dan DOCX lewat aplikasi sampai status akhir |
 | Uji tampilan | Laman Unggah, Kotak Verifikasi, dan Arsip pada lebar 375 px dan 1280 px tanpa tampilan terpotong (UI V2 Review) |

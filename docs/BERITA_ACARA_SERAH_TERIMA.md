@@ -46,7 +46,7 @@ Berfungsi dan teruji di laptop pengembang:
 
 - Aplikasi web: masuk, unggah, klasifikasi AI lokal, Kotak Verifikasi, Arsip, dan laman Admin.
 - Pengelolaan akun dan dokumen lewat laman Admin atau perintah `kelola` di server.
-- 32 tes backend dan 53 tes pipeline lulus.
+- 34 tes backend dan 53 tes pipeline lulus.
 - Pemasangan dependensi di Ubuntu 24.04, serta cadangan dan pemulihan database.
 
 Belum dikerjakan atau belum diuji:

@@ -180,6 +180,7 @@ Endpoint laman Admin (ditambahkan 23 November 2026 atas permintaan pengguna). Se
 | GET | `/admin/akun` | Daftar akun, jumlah dokumen, dan status ditutup |
 | POST | `/admin/akun` | Buat akun `{username, nama, nip, peran}`, balikan password awal sekali |
 | POST | `/admin/akun/impor` | Buat banyak akun dari CSV (multipart field `berkas`), balikan `dibuat` dan `dilewati` |
+| PATCH | `/admin/akun/{id}` | Ubah `{nama, nip}`. NIP kosong berarti dikosongkan; NIP yang dipakai akun lain ditolak |
 | POST | `/admin/akun/{id}/reset-password` | Password baru, balikan sekali. Juga membuka akun yang ditutup |
 | POST | `/admin/akun/{id}/tutup` | Tutup akun (tidak bisa menutup akun sendiri) |
 | GET | `/admin/dokumen-gagal` | Dokumen berstatus gagal: nama berkas, pengunggah, waktu, keterangan |

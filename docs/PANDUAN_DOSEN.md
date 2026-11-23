@@ -200,6 +200,9 @@ Daftar jenis lengkap tersedia di menu pilihan form koreksi. Pembagian kategori m
 **Dokumen saya berstatus Gagal. Apa yang harus dilakukan?**
 Biasanya karena berkas rusak, terkunci password, atau tidak ada teks yang terbaca (misalnya scan terlalu buram). Hubungi pengelola dengan menyebut nama berkas dan waktu unggah. Mengunggah ulang berkas yang sama saat ini ditolak dengan keterangan "Sudah pernah diunggah", jadi pengelola yang akan memproses ulang.
 
+**Nama atau NIP di akun saya salah.**
+Hubungi pengelola. NIP yang benar penting supaya dokumen yang menyebut nama Anda (misalnya SK bersama) bisa tertaut ke akun Anda.
+
 **Muncul "Sudah pernah diunggah", padahal saya belum pernah mengunggahnya.**
 Berkas yang persis sama mungkin sudah diunggah dosen lain, misalnya SK bersama. Hubungi pengelola agar dokumen itu ditautkan ke akun Anda.
 
