@@ -245,14 +245,39 @@ def test_audit_database_append_only(context):
             db.rollback()
 
 
-def test_restart_marks_interrupted_documents_failed(context):
+def test_restart_resumes_interrupted_documents(context):
     client, sessions, users = context
-    identifier = upload(client, users[0])['documents'][0]['id']
+    terputus = upload(client, users[0], 'sk-tinggi.pdf', b'%PDF-1.4\nterputus')['documents'][0]['id']
+    macet = upload(client, users[0], 'sk-macet.pdf', b'%PDF-1.4\nmacet')['documents'][0]['id']
     with sessions() as db:
-        db.get(Document, uuid.UUID(identifier)).status = 'diproses'
+        # Seolah backend mati di tengah proses: dokumen pertama baru sekali dicoba,
+        # dokumen kedua sudah membuat proses berhenti tiga kali.
+        db.get(Document, uuid.UUID(terputus)).status = 'diproses'
+        db.get(Document, uuid.UUID(terputus)).metadata_lain = {'_percobaan': 1}
+        db.get(Document, uuid.UUID(macet)).status = 'diproses'
+        db.get(Document, uuid.UUID(macet)).metadata_lain = {'_percobaan': pipeline.MAKS_PERCOBAAN}
         db.commit()
-        pipeline.mark_interrupted(db)
-        assert db.get(Document, uuid.UUID(identifier)).status == 'gagal'
+    pipeline.lanjutkan_antrean()
+    with sessions() as db:
+        lanjut = db.get(Document, uuid.UUID(terputus))
+        assert lanjut.status == 'terverifikasi'
+        assert '_percobaan' not in lanjut.metadata_lain
+        gagal = db.get(Document, uuid.UUID(macet))
+        assert gagal.status == 'gagal' and gagal.metadata_lain == {'_error': pipeline.PESAN_TERHENTI}
+
+
+def test_attempt_is_recorded_before_pipeline_runs(context, monkeypatch):
+    client, sessions, users = context
+    tercatat = []
+    def amati(path, scenario, original_name):
+        with sessions() as db:
+            doc = db.scalar(select(Document).where(Document.nama_berkas == original_name))
+            tercatat.append(doc.metadata_lain.get('_percobaan'))
+        from app.integrations.mock import process_document as asli
+        return asli(path, scenario=scenario, original_name=original_name)
+    monkeypatch.setattr(pipeline, 'mock_process', amati)
+    upload(client, users[0], 'sk-catat.pdf', b'%PDF-1.4\ncatat')
+    assert tercatat == [1]
 
 
 def test_malformed_pipeline_and_invalid_taxonomy_fail_safely(context, monkeypatch):

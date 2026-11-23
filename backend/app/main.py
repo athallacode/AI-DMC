@@ -1,3 +1,4 @@
+import threading
 from contextlib import asynccontextmanager
 from fastapi import Depends, FastAPI, HTTPException
 from fastapi.encoders import jsonable_encoder
@@ -9,15 +10,14 @@ from .config import get_settings
 from .database import SessionLocal, get_db
 from .models import Correction, User
 from .security import current_user
-from .services.pipeline import mark_interrupted
+from .services.pipeline import lanjutkan_antrean
 from .services.taxonomy import load_taxonomy
 
 
 @asynccontextmanager
 async def lifespan(app):
-    # MVP uses one worker. No durable task queue: explicitly fail interrupted jobs.
-    with SessionLocal() as db:
-        mark_interrupted(db)
+    # Satu worker. Dokumen yang terputus saat restart dilanjutkan di thread terpisah supaya start tidak tertahan.
+    threading.Thread(target=lanjutkan_antrean, name='lanjutkan-antrean', daemon=True).start()
     yield
 
 
