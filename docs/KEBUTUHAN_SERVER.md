@@ -1,6 +1,7 @@
 # Kebutuhan Server AI-DMC (1 prodi, sekitar 50 dosen)
 
-Disusun 21 November 2026 dari kode di branch `feat/ai-asli-dan-perbaikan-ui`. Dokumen ini daftar persiapan sebelum deploy. Belum ada yang dibangun atau diuji di server.
+Diperbarui 23 November 2026 dari kode di branch `feat/ai-asli-dan-perbaikan-ui`.
+Daftar persiapan sebelum deploy. Belum dijalankan di server sungguhan.
 
 ## 1. Ringkasan
 

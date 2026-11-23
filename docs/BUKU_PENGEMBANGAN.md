@@ -100,6 +100,8 @@ Model `gemma4:e4b`, 3 voting, ambang 0,85. Laporan lengkap ada di `pipeline/eval
 
 Dokumen asli belum punya label jenis dan tanggal, jadi akurasi jenis untuk data asli belum terukur.
 
+Petunjuk jenis di prompt ditambahkan setelah melihat kesalahan pada 45 dokumen uji yang sama (sebelumnya jenis 86,7%), jadi angka 97,8% kemungkinan terlalu optimis untuk dokumen baru. Evaluasi berikutnya perlu set uji yang tidak dipakai saat menyetel prompt.
+
 ## 5. Backend
 
 ### 5.1 Modul
