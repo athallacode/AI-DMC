@@ -24,6 +24,7 @@ class KlienOllama:
         self.host = settings.ollama_host.rstrip("/")
         self.nama_model = settings.ollama_model
         self.timeout = settings.ollama_timeout
+        self.ukuran_konteks = settings.ukuran_konteks
 
     def chat_json(self, system: str, user: str, schema: dict, temperature: float) -> str:
         payload = {
@@ -35,7 +36,8 @@ class KlienOllama:
             "format": schema,  # structured output: Ollama memaksa output mengikuti JSON Schema
             "stream": False,
             "think": False,  # model "thinking" dimatikan supaya cepat dan output langsung JSON
-            "options": {"temperature": temperature},
+            # num_ctx dikunci supaya prompt tidak terpotong oleh konteks bawaan server Ollama
+            "options": {"temperature": temperature, "num_ctx": self.ukuran_konteks},
         }
         try:
             r = httpx.post(f"{self.host}/api/chat", json=payload, timeout=self.timeout)

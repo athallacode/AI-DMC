@@ -18,6 +18,11 @@ class Settings:
     ollama_host: str = _env("OLLAMA_HOST", "http://localhost:11434")
     ollama_model: str = _env("OLLAMA_MODEL", "gemma4:e4b")
     ollama_timeout: float = _env("OLLAMA_TIMEOUT", 180.0)
+    # Ukuran konteks LLM (token) untuk prompt + jawaban. Teks 12.000 karakter + instruksi + taksonomi
+    # bisa mencapai 7.700 token kalau teksnya tabel nama dan NIDN hasil OCR (diukur 24 November 2026);
+    # dengan 8.192 jawaban terpotong. Tanpa nilai ini Ollama memakai bawaan server, yang bisa 4.096
+    # sehingga awal prompt (instruksi) terpotong diam-diam. Naikkan kalau PIPELINE_MAX_CHARS dinaikkan.
+    ukuran_konteks: int = _env("PIPELINE_NUM_CTX", 16384)
     # Jumlah pemanggilan LLM per dokumen untuk skor keyakinan (voting).
     # 1 = paling cepat, tapi skor selalu 0,5 sehingga semua dokumen masuk Kotak Verifikasi.
     jumlah_voting: int = _env("PIPELINE_VOTES", 3)

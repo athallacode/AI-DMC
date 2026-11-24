@@ -2,10 +2,13 @@
 
 - PDF digital  -> teks diambil langsung dengan PyMuPDF.
 - PDF scan     -> halaman yang teksnya hampir kosong dirender jadi gambar lalu di-OCR.
+- PDF rusak    -> halaman yang lapisan teksnya acak (font tanpa pemetaan karakter yang benar,
+                  misal "1DPD" untuk "Nama") diperlakukan seperti halaman scan.
 - DOCX         -> paragraf dan isi tabel dengan python-docx.
 - Gambar       -> langsung di-OCR.
 """
 
+import re
 from dataclasses import dataclass, field
 from pathlib import Path
 
@@ -18,6 +21,23 @@ EKSTENSI_GAMBAR = {".jpg", ".jpeg", ".png", ".webp", ".bmp", ".tif", ".tiff"}
 
 class BerkasTidakDidukung(Exception):
     pass
+
+
+# Kata yang wajar: huruf, angka/tanggal/NIM, atau kode yang diawali huruf (CII2J4, IF-44-01).
+_KATA_WAJAR = re.compile(
+    r"""^[("'\[]?(?:[A-Za-z][A-Za-z'\-]*|[0-9][0-9.,:/\-]*|[A-Za-z]+[0-9][A-Za-z0-9\-/.]*|[0-9]+[a-z]{1,3})[)"'\].,:;?!%]*$"""
+)
+# Pada 699 halaman dokumen asli: halaman rusak 0,98 sampai 0,99, halaman normal paling tinggi 0,27.
+BATAS_TEKS_RUSAK = 0.5
+
+
+def teks_rusak(teks: str) -> bool:
+    """True kalau lapisan teks halaman berisi karakter acak, bukan kata."""
+    kata = teks.split()
+    if len(kata) < 30:  # terlalu sedikit untuk dinilai; halaman nyaris kosong ditangani batas karakter
+        return False
+    aneh = sum(not _KATA_WAJAR.match(k) for k in kata)
+    return aneh / len(kata) > BATAS_TEKS_RUSAK
 
 
 @dataclass
@@ -89,17 +109,27 @@ def ekstrak_pdf(path: Path, settings: Settings, ocr_fn=None) -> HasilEkstraksi:
 
     teks_halaman: list[str] = []
     perlu_ocr: list[int] = []
+    kosong: list[int] = []
+    rusak: list[int] = []
     with fitz.open(str(path)) as pdf:
         if pdf.needs_pass:
             raise BerkasTidakDidukung("PDF terkunci kata sandi. Buka kuncinya dulu lalu unggah ulang.")
         jumlah = pdf.page_count
         for i, halaman in enumerate(pdf):
             t = halaman.get_text("text") or ""
-            teks_halaman.append(t)
             if len(t.strip()) < settings.min_karakter_halaman:
+                kosong.append(i)
                 perlu_ocr.append(i)
+            elif teks_rusak(t):
+                # Teks acak lebih buruk daripada tidak ada teks: bisa membuat AI salah jenis.
+                rusak.append(i)
+                perlu_ocr.append(i)
+                t = ""
+            teks_halaman.append(t)
 
         catatan = []
+        if rusak:
+            catatan.append(f"Lapisan teks {len(rusak)} halaman rusak, diperlakukan seperti halaman scan.")
         di_ocr: list[int] = []
         if perlu_ocr:
             if ocr_fn is None:
@@ -115,7 +145,7 @@ def ekstrak_pdf(path: Path, settings: Settings, ocr_fn=None) -> HasilEkstraksi:
                 di_ocr.append(i)
 
     # Dianggap scan kalau lebih dari separuh halaman tidak punya lapisan teks
-    jenis = "pdf_scan" if len(perlu_ocr) > jumlah / 2 else "pdf_digital"
+    jenis = "pdf_scan" if len(kosong) > jumlah / 2 else "pdf_digital"
     gabungan = "\n\n".join(f"[Halaman {i + 1}]\n{t.strip()}" for i, t in enumerate(teks_halaman) if t.strip())
     return HasilEkstraksi(
         teks=_rapikan(gabungan),

@@ -20,7 +20,7 @@ from pydantic import ValidationError
 
 from pipeline.config import Settings
 from pipeline.llm import KlienLLM, LLMError
-from pipeline.schemas import HasilLLM, skema_json_llm
+from pipeline.schemas import MAKS_DOSEN_TERKAIT, HasilLLM, skema_json_llm
 from pipeline.taxonomy import Taxonomy
 
 PROMPT_DIR = Path(__file__).parent / "prompts"
@@ -244,7 +244,7 @@ def klasifikasi(teks: str, klien: KlienLLM, taksonomi: Taxonomy, settings: Setti
         "nomor_dokumen": nomor,
         "tanggal_terbit": tanggal,
         "periode": saring_periode(terpilih.periode),
-        "dosen_terkait": [d.model_dump() for d in terpilih.dosen_terkait[:10]],
+        "dosen_terkait": [d.model_dump() for d in terpilih.dosen_terkait[:MAKS_DOSEN_TERKAIT]],
         "mitra_penerbit": terpilih.mitra_penerbit,
         "sumber_dana": terpilih.sumber_dana,
         "identifier": terpilih.identifier,
