@@ -34,7 +34,10 @@ PETUNJUK MEMBEDAKAN JENIS
   - kontrak kuliah antara dosen dan mahasiswa -> "Kontrak perkuliahan"
   - kriteria dan bobot penilaian tugas atau ujian -> "Rubrik penilaian"
 - Sertifikat memuat kata "Sertifikat" / "Certificate" dan "diberikan kepada". Peran di sertifikat menentukan jenisnya (narasumber, presenter, kompetensi, dll).
-- Daftar nilai berupa tabel NIM, nama mahasiswa, dan nilai huruf atau angka.
+- Daftar nilai berupa tabel NIM, nama mahasiswa, dan nilai akhir berupa huruf (A, AB, B, BC, C, D, E) atau indeks nilai -> "Daftar nilai akhir".
+- Berita acara atau bukti input nilai online (pernyataan bahwa nilai mata kuliah sudah diinput atau dicetak dari sistem nilai) -> "Daftar nilai akhir". "Berita acara sidang" hanya untuk sidang atau ujian tugas akhir dan tesis.
+- Presensi atau daftar hadir berupa tabel NIM, nama mahasiswa, dan kehadiran per pertemuan atau persentase kehadiran (kata "Presensi", "Kehadiran", "Daftar Hadir") -> "Presensi perkuliahan", BUKAN "Daftar nilai akhir". Persentase kehadiran bukan nilai.
+- Satu berkas bisa berisi beberapa dokumen yang digabung. Jenis ditentukan dari dokumen UTAMA di bagian awal. Kalau berkas diawali SK (KEPUTUSAN ... MENETAPKAN), jenisnya SK walaupun di belakangnya ada lampiran presensi, daftar nilai, atau dokumen lain.
 
 TAKSONOMI (format: KODE (nama kategori), lalu subkategori: daftar jenis)
 {taksonomi}

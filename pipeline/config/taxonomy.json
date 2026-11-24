@@ -8,6 +8,7 @@
       "subkategori": [
         { "nama": "SK mengajar dan beban kerja", "jenis": ["SK mengajar", "Surat tugas mengajar"] },
         { "nama": "Perangkat perkuliahan", "jenis": ["RPS", "Kontrak perkuliahan", "Rubrik penilaian"] },
+        { "nama": "Pelaksanaan perkuliahan", "jenis": ["Presensi perkuliahan"] },
         { "nama": "Nilai dan evaluasi pembelajaran", "jenis": ["Daftar nilai akhir", "Nilai EDOM"] },
         { "nama": "Pembimbingan dan pengujian", "jenis": ["SK pembimbing TA/tesis", "SK penguji TA/tesis", "Berita acara sidang"] },
         { "nama": "Bahan ajar", "jenis": ["Bahan ajar", "Buku ajar"] },
