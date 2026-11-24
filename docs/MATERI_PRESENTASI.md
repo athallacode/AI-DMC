@@ -175,7 +175,7 @@ Sumber: hasil uji 24 November 2026 (`data/nyata_2026-11-24`, tidak masuk reposit
 | Lapisan teks PDF rusak (huruf tergeser, "1DPD" untuk "Nama") | AI membaca karakter acak dan salah jenis | Halaman rusak dikenali otomatis lalu dibaca ulang dengan OCR |
 | Batas konteks bawaan server Ollama | Prompt atau jawaban AI bisa terpotong diam-diam | Ukuran konteks dikunci 16.384 token |
 
-Hasil: semua 89 dokumen benar jenisnya (slide 10). Uji ulang data dummy untuk memastikan kategori lain tidak rusak: **[diisi setelah uji regresi selesai]**
+Hasil: semua 89 dokumen benar jenisnya (slide 10). Uji ulang 45 dokumen dummy semua kategori untuk memastikan kategori lain tidak rusak: aturan presensi sempat membuat 2 Nilai EDOM terbaca sebagai presensi, lalu diperbaiki dengan aturan EDOM dan SK keanggotaan CoE. Hasil akhir: semua field 100%, lolos otomatis 100% dan semuanya benar. Aturan terakhir disetel dari set dummy yang sama, jadi angka ini optimis.
 
 Catatan pembicara: tiga dari lima temuan (teks PDF rusak, lampiran panjang, batas konteks) tidak akan muncul di data dummy. Ini alasan uji dengan dokumen asli wajib dilakukan sebelum dipakai dosen.
 
