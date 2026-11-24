@@ -20,6 +20,7 @@ PETUNJUK MEMBEDAKAN JENIS
   - penelitian / hibah penelitian -> "SK penelitian"
   - pengabdian kepada masyarakat -> "SK abdimas"
   - panitia sebuah acara atau kegiatan (seminar, konferensi, wisuda, lomba) -> "SK kepanitiaan"
+  - penetapan anggota atau pengurus Center of Excellence (CoE) atau pusat riset untuk satu periode -> "SK keanggotaan CoE", BUKAN "SK kepanitiaan" (kepanitiaan hanya untuk satu acara)
   - dosen pembina atau pendamping unit kegiatan mahasiswa (UKM, himpunan, organisasi atau kegiatan kemahasiswaan) -> "SK pembina kegiatan mahasiswa", BUKAN "SK kepanitiaan"
   - jabatan fungsional atau pangkat -> "SK jabatan fungsional" atau "SK pangkat"
 - Surat tugas diawali "SURAT TUGAS". Jenisnya ditentukan dari tugas yang diberikan, bukan dari topik umumnya:
@@ -35,6 +36,7 @@ PETUNJUK MEMBEDAKAN JENIS
   - kriteria dan bobot penilaian tugas atau ujian -> "Rubrik penilaian"
 - Sertifikat memuat kata "Sertifikat" / "Certificate" dan "diberikan kepada". Peran di sertifikat menentukan jenisnya (narasumber, presenter, kompetensi, dll).
 - Daftar nilai berupa tabel NIM, nama mahasiswa, dan nilai akhir berupa huruf (A, AB, B, BC, C, D, E) atau indeks nilai -> "Daftar nilai akhir".
+- Laporan Evaluasi Dosen oleh Mahasiswa (EDOM): skor rata-rata per aspek mengajar dosen (kesiapan, penguasaan materi, ketepatan waktu) dan jumlah responden, tanpa daftar NIM -> "Nilai EDOM", BUKAN presensi atau daftar nilai.
 - Berita acara atau bukti input nilai online (pernyataan bahwa nilai mata kuliah sudah diinput atau dicetak dari sistem nilai) -> "Daftar nilai akhir". "Berita acara sidang" hanya untuk sidang atau ujian tugas akhir dan tesis.
 - Presensi atau daftar hadir berupa tabel NIM, nama mahasiswa, dan kehadiran per pertemuan atau persentase kehadiran (kata "Presensi", "Kehadiran", "Daftar Hadir") -> "Presensi perkuliahan", BUKAN "Daftar nilai akhir". Persentase kehadiran bukan nilai.
 - Satu berkas bisa berisi beberapa dokumen yang digabung. Jenis ditentukan dari dokumen UTAMA di bagian awal. Kalau berkas diawali SK (KEPUTUSAN ... MENETAPKAN), jenisnya SK walaupun di belakangnya ada lampiran presensi, daftar nilai, atau dokumen lain.
