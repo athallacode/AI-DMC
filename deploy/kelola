@@ -1,0 +1,13 @@
+#!/bin/sh
+# Perintah pengelola AI-DMC di server. Dipasang ke /usr/local/bin/kelola oleh deploy/pasang-backend.sh.
+# Contoh: sudo kelola akun daftar
+if [ "$(id -u)" -ne 0 ]; then echo "Jalankan dengan sudo: sudo kelola $*"; exit 1; fi
+# Pengaturan diambil dari .env yang sama dengan layanan backend (path di dalamnya wajib absolut).
+set -a
+. /opt/ai-dmc/.env
+set +a
+export PYTHONPATH=/opt/ai-dmc/backend:/opt/ai-dmc PADDLE_PDX_DISABLE_MODEL_SOURCE_CHECK=True
+# Berkas yang dibuat (misal password_awal.csv) hanya bisa dibaca root.
+umask 077
+# -P: jangan memuat modul dari folder saat ini.
+exec /opt/ai-dmc/.venv/bin/python -P -m app.kelola "$@"

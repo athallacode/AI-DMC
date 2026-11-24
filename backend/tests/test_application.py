@@ -21,6 +21,7 @@ from app.main import app
 from app.models import AuditLog, Correction, Document, DocumentLecturer, User
 from app.security import create_token, hash_password
 import app.main as main_module
+import app.api.auth as auth_module
 import app.services.pipeline as pipeline
 
 
@@ -40,6 +41,7 @@ def context(tmp_path, monkeypatch):
         with sessions() as db:
             yield db
     app.dependency_overrides[get_db] = override_db
+    auth_module.pembatas.reset()
     users = []
     with sessions() as db:
         for username, role in [('dosen1', 'dosen'), ('dosen2', 'dosen'), ('admin', 'admin')]:
@@ -74,6 +76,34 @@ def test_login_health_and_authorization(context):
     assert client.get('/auth/me', headers={'Authorization': 'Bearer ' + response.json()['access_token']}).json()['id'] == str(users[0].id)
 
 
+def test_login_locked_after_repeated_failures(context, monkeypatch):
+    client, sessions, users = context
+    sekarang = [1000.0]
+    monkeypatch.setattr(auth_module.time, 'monotonic', lambda: sekarang[0])
+    login = lambda username, password: client.post('/auth/login', json={'username': username, 'password': password})
+    for _ in range(5):
+        assert login('dosen1', 'salah').status_code == 401
+    # Terkunci: password benar pun ditolak, dengan pesan yang bisa dibaca dosen.
+    terkunci = login('dosen1', 'test-password')
+    assert terkunci.status_code == 429 and '15 menit' in terkunci.json()['detail']
+    assert login('DOSEN1', 'test-password').status_code == 429
+    # Akun lain tidak ikut terkunci.
+    assert login('dosen2', 'test-password').status_code == 200
+    # Username tak terdaftar diperlakukan sama, tanpa membocorkan bahwa akunnya tidak ada.
+    for _ in range(5):
+        assert login('tidak-ada', 'x').status_code == 401
+    assert login('tidak-ada', 'x').status_code == 429
+    # Setelah 15 menit, bisa masuk lagi, dan login berhasil menghapus hitungan gagal.
+    sekarang[0] += 15 * 60 + 1
+    assert login('dosen1', 'test-password').status_code == 200
+    for _ in range(4):
+        assert login('dosen1', 'salah').status_code == 401
+    assert login('dosen1', 'test-password').status_code == 200
+    with sessions() as db:
+        aksi = [r.aksi for r in db.scalars(select(AuditLog).where(AuditLog.user_id == users[0].id))]
+        assert aksi.count('login_gagal') == 9 and aksi.count('login') == 2
+
+
 def test_pipeline_outcomes_filters_and_duplicate_privacy(context):
     client, _, users = context
     ids = []
@@ -103,7 +133,12 @@ def test_file_access_linked_lecturer_and_confidential(context):
     with sessions() as db:
         db.add(DocumentLecturer(document_id=uuid.UUID(identifier), user_id=users[1].id, nama='dosen2', peran='Anggota'))
         db.commit()
+    # Tautan hasil tebakan AI belum memberi akses sebelum pengunggah menyetujui.
+    assert client.get(path, headers=headers(users[1])).status_code == 404
+    assert client.get('/documents', headers=headers(users[1])).json() == []
+    assert client.post(path + '/approve', headers=headers(users[0])).status_code == 200
     assert client.get(path, headers=headers(users[1])).status_code == 200
+    assert client.get(path + '/file', headers=headers(users[1])).status_code == 200
     with sessions() as db:
         db.get(Document, uuid.UUID(identifier)).tingkat_akses = 'rahasia'
         db.commit()
@@ -126,6 +161,24 @@ def test_correction_approval_and_audit(context):
         assert {row.aksi for row in db.scalars(select(AuditLog)).all()} == {'upload', 'koreksi'}
     assert client.get('/admin/koreksi/export', headers=headers(users[0])).status_code == 403
     assert len(client.get('/admin/koreksi/export', headers=headers(users[2])).json()) == 1
+
+
+def test_linked_lecturer_can_view_but_not_change(context):
+    client, _, users = context
+    identifier = upload(client, users[0])['documents'][0]['id']
+    path = '/documents/' + identifier
+    # Pengunggah menautkan dosen2 lewat koreksi (NIP cocok dengan akun dosen2).
+    response = client.patch(path, headers=headers(users[0]), json={'dosen_terkait': [{'nama': 'Dosen Dua', 'nip': 'dosen2', 'peran': 'Pengajar'}]})
+    assert response.status_code == 200, response.text
+    assert client.get(path, headers=headers(users[1])).status_code == 200
+    assert client.post(path + '/approve', headers=headers(users[1])).status_code == 403
+    assert client.post(path + '/reject', headers=headers(users[1])).status_code == 403
+    assert client.patch(path, headers=headers(users[1]), json={'judul': 'Diubah orang lain'}).status_code == 403
+    assert client.patch(path, headers=headers(users[1]), json={'dosen_terkait': []}).status_code == 403
+    after = client.get(path, headers=headers(users[0])).json()
+    assert after['status'] == 'terverifikasi'
+    assert after['judul'] != 'Diubah orang lain'
+    assert {d['nip'] for d in after['dosen_terkait']} >= {'dosen2'}
 
 
 def test_approve_reject_state_and_validation(context):
@@ -192,14 +245,39 @@ def test_audit_database_append_only(context):
             db.rollback()
 
 
-def test_restart_marks_interrupted_documents_failed(context):
+def test_restart_resumes_interrupted_documents(context):
     client, sessions, users = context
-    identifier = upload(client, users[0])['documents'][0]['id']
+    terputus = upload(client, users[0], 'sk-tinggi.pdf', b'%PDF-1.4\nterputus')['documents'][0]['id']
+    macet = upload(client, users[0], 'sk-macet.pdf', b'%PDF-1.4\nmacet')['documents'][0]['id']
     with sessions() as db:
-        db.get(Document, uuid.UUID(identifier)).status = 'diproses'
+        # Seolah backend mati di tengah proses: dokumen pertama baru sekali dicoba,
+        # dokumen kedua sudah membuat proses berhenti tiga kali.
+        db.get(Document, uuid.UUID(terputus)).status = 'diproses'
+        db.get(Document, uuid.UUID(terputus)).metadata_lain = {'_percobaan': 1}
+        db.get(Document, uuid.UUID(macet)).status = 'diproses'
+        db.get(Document, uuid.UUID(macet)).metadata_lain = {'_percobaan': pipeline.MAKS_PERCOBAAN}
         db.commit()
-        pipeline.mark_interrupted(db)
-        assert db.get(Document, uuid.UUID(identifier)).status == 'gagal'
+    pipeline.lanjutkan_antrean()
+    with sessions() as db:
+        lanjut = db.get(Document, uuid.UUID(terputus))
+        assert lanjut.status == 'terverifikasi'
+        assert '_percobaan' not in lanjut.metadata_lain
+        gagal = db.get(Document, uuid.UUID(macet))
+        assert gagal.status == 'gagal' and gagal.metadata_lain == {'_error': pipeline.PESAN_TERHENTI}
+
+
+def test_attempt_is_recorded_before_pipeline_runs(context, monkeypatch):
+    client, sessions, users = context
+    tercatat = []
+    def amati(path, scenario, original_name):
+        with sessions() as db:
+            doc = db.scalar(select(Document).where(Document.nama_berkas == original_name))
+            tercatat.append(doc.metadata_lain.get('_percobaan'))
+        from app.integrations.mock import process_document as asli
+        return asli(path, scenario=scenario, original_name=original_name)
+    monkeypatch.setattr(pipeline, 'mock_process', amati)
+    upload(client, users[0], 'sk-catat.pdf', b'%PDF-1.4\ncatat')
+    assert tercatat == [1]
 
 
 def test_malformed_pipeline_and_invalid_taxonomy_fail_safely(context, monkeypatch):

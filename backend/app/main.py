@@ -1,23 +1,23 @@
+import threading
 from contextlib import asynccontextmanager
 from fastapi import Depends, FastAPI, HTTPException
 from fastapi.encoders import jsonable_encoder
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import select, text
 from sqlalchemy.orm import Session
-from .api import auth, documents
+from .api import admin, auth, documents
 from .config import get_settings
 from .database import SessionLocal, get_db
 from .models import Correction, User
 from .security import current_user
-from .services.pipeline import mark_interrupted
+from .services.pipeline import lanjutkan_antrean
 from .services.taxonomy import load_taxonomy
 
 
 @asynccontextmanager
 async def lifespan(app):
-    # MVP uses one worker. No durable task queue: explicitly fail interrupted jobs.
-    with SessionLocal() as db:
-        mark_interrupted(db)
+    # Satu worker. Dokumen yang terputus saat restart dilanjutkan di thread terpisah supaya start tidak tertahan.
+    threading.Thread(target=lanjutkan_antrean, name='lanjutkan-antrean', daemon=True).start()
     yield
 
 
@@ -25,6 +25,7 @@ app = FastAPI(title='AI-DMC API', version='0.1.0', lifespan=lifespan)
 app.add_middleware(CORSMiddleware, allow_origins=get_settings().cors_origins.split(','), allow_methods=['GET', 'POST', 'PATCH'], allow_headers=['Authorization', 'Content-Type'])
 app.include_router(auth.router)
 app.include_router(documents.router)
+app.include_router(admin.router)
 
 
 @app.get('/health')

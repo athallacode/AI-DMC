@@ -173,7 +173,26 @@ Aturan:
 | PATCH | `/documents/{id}` | Koreksi klasifikasi / metadata |
 | POST | `/documents/{id}/reject` | Tolak dokumen |
 
-Status dokumen: `diproses` → `menunggu_verifikasi` / `terverifikasi` → (`ditolak`). Plus `gagal` kalau pipeline error.
+Endpoint laman Admin (ditambahkan 23 November 2026 atas permintaan pengguna). Semua hanya untuk akun berperan `admin`; akun lain mendapat 403. Admin tetap tidak bisa membuka isi dokumen dosen. Setiap perubahan dicatat di `audit_log` dengan aksi `kelola_...`, sama seperti perintah `app.kelola`.
+
+| Method | Endpoint | Fungsi |
+|---|---|---|
+| GET | `/admin/akun` | Daftar akun, jumlah dokumen, dan status ditutup |
+| POST | `/admin/akun` | Buat akun `{username, nama, nip, peran}`, balikan password awal sekali |
+| POST | `/admin/akun/impor` | Buat banyak akun dari CSV (multipart field `berkas`), balikan `dibuat` dan `dilewati` |
+| PATCH | `/admin/akun/{id}` | Ubah `{nama, nip}`. NIP kosong berarti dikosongkan; NIP yang dipakai akun lain ditolak |
+| POST | `/admin/akun/{id}/reset-password` | Password baru, balikan sekali. Juga membuka akun yang ditutup |
+| POST | `/admin/akun/{id}/tutup` | Tutup akun (tidak bisa menutup akun sendiri) |
+| GET | `/admin/dokumen-gagal` | Dokumen berstatus gagal: nama berkas, pengunggah, waktu, keterangan |
+| GET | `/admin/dokumen-ditolak` | Dokumen berstatus ditolak: nama berkas, pengunggah, waktu ditolak |
+| POST | `/admin/dokumen/{id}/kembalikan` | Kembalikan dokumen ditolak ke `menunggu_verifikasi`. Konfirmasi dosen tertaut (selain pengunggah) direset |
+| GET | `/admin/dokumen?cari=` | Cari dokumen berdasarkan nama berkas (minimal 3 huruf, maksimal 20 hasil) |
+| POST | `/admin/dokumen/{id}/proses-ulang` | Proses ulang dokumen gagal |
+| POST | `/admin/dokumen/{id}/tautkan` | Tautkan dosen lain `{username, peran}` ke dokumen (SK bersama) |
+| GET | `/admin/log?batas=` | Aktivitas terakhir di log audit, tanpa isi detail |
+| GET | `/admin/koreksi/export` | Ekspor riwayat koreksi |
+
+Status dokumen: `diproses` → `menunggu_verifikasi` / `terverifikasi` → (`ditolak`). Plus `gagal` kalau pipeline error. Dokumen `ditolak` hanya bisa dikembalikan ke `menunggu_verifikasi` oleh admin.
 
 ### 4.3 Skema Database
 

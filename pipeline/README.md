@@ -81,7 +81,8 @@ python -m pipeline.main data/dummy/sk_mengajar.pdf
 
 ### Keamanan
 - Semua pemrosesan lokal. Tidak ada panggilan ke API AI publik.
-- Teks dokumen dibungkus tag `<dokumen>`, tag di dalam teks dinetralkan, dan prompt menegaskan isi dokumen adalah data (P1-11).
+- Teks dokumen dibungkus tag `<dokumen>`, tag di dalam teks dinetralkan, dan prompt menegaskan isi dokumen adalah data, baik sebelum maupun sesudah dokumen (P1-11).
+- Baris yang berbentuk perintah ke AI (`POLA_INJEKSI` di `classify.py`) disamarkan sebelum dikirim ke LLM, dan skornya dibatasi 0,5 supaya dokumen selalu masuk Kotak Verifikasi. Teks asli di output tidak berubah. Pola ini hanya menangkap kalimat yang dikenal, jadi bukan jaminan penuh.
 - Dokumen panjang dipotong: 2/3 awal + 1/3 akhir (P1-12 versi awal).
 
 ## Tes

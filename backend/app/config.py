@@ -9,6 +9,8 @@ class Settings(BaseSettings):
     database_url: str = 'postgresql+psycopg://ai_dmc:ai_dmc@localhost:5432/ai_dmc'
     jwt_secret: str = Field(min_length=32)
     jwt_expire_minutes: int = Field(default=60, ge=1)
+    login_maks_gagal: int = Field(default=5, ge=1)
+    login_kunci_menit: int = Field(default=15, ge=1)
     storage_dir: Path = Path('../storage')
     pipeline_mode: str = 'mock'
     pipeline_import: str = 'app.integrations.real:process_document'

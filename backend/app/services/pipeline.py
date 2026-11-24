@@ -1,5 +1,6 @@
 import importlib
 import logging
+import threading
 from decimal import Decimal
 from sqlalchemy import select
 from ..config import get_settings
@@ -12,13 +13,36 @@ from .taxonomy import valid_classification
 
 logger = logging.getLogger(__name__)
 
+# Antrean permanen tanpa tabel baru: dokumen berstatus 'diproses' di database adalah antreannya.
+# Saat backend start, dokumen yang terputus diproses lagi (lanjutkan_antrean). Jumlah percobaan
+# disimpan di metadata_lain['_percobaan'] supaya dokumen yang membuat proses berhenti berulang kali
+# tidak berputar terus.
+MAKS_PERCOBAAN = 3
+PESAN_TERHENTI = 'Pemrosesan terhenti beberapa kali saat layanan dimulai ulang. Hubungi pengelola.'
+# Satu dokumen diproses pada satu waktu: OCR dan LLM berbagi CPU dan GPU yang sama.
+_satu_per_satu = threading.Lock()
+
 
 def process_document(document_id):
+    with _satu_per_satu:
+        _proses(document_id)
+
+
+def _proses(document_id):
     settings = get_settings()
     with SessionLocal() as db:
         doc = db.get(Document, document_id)
         if not doc or doc.status != 'diproses':
             return
+        percobaan = int((doc.metadata_lain or {}).get('_percobaan', 0))
+        if percobaan >= MAKS_PERCOBAAN:
+            doc.status = 'gagal'
+            doc.metadata_lain = {'_error': PESAN_TERHENTI}
+            db.commit()
+            return
+        # Dicatat sebelum pipeline jalan: kalau proses mati di tengah, hitungannya sudah tersimpan.
+        doc.metadata_lain = {**(doc.metadata_lain or {}), '_percobaan': percobaan + 1}
+        db.commit()
         try:
             if settings.pipeline_mode == 'mock':
                 name = doc.nama_berkas.lower()
@@ -60,8 +84,11 @@ def process_document(document_id):
                 db.commit()
 
 
-def mark_interrupted(db):
-    for doc in db.scalars(select(Document).where(Document.status == 'diproses')).all():
-        doc.status = 'gagal'
-        doc.metadata_lain = {'_error': 'Pemrosesan terhenti saat layanan dimulai ulang. Hubungi pengelola.'}
-    db.commit()
+def lanjutkan_antrean():
+    """Proses ulang dokumen yang masih 'diproses' saat backend start (terputus oleh restart)."""
+    with SessionLocal() as db:
+        antrean = db.scalars(select(Document.id).where(Document.status == 'diproses').order_by(Document.created_at)).all()
+    if antrean:
+        logger.info('Melanjutkan %d dokumen yang terputus', len(antrean))
+    for document_id in antrean:
+        process_document(document_id)
