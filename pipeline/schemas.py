@@ -9,6 +9,7 @@ from datetime import date
 
 from pydantic import BaseModel, Field, field_validator
 
+MAKS_DOSEN_TERKAIT = 10  # sama dengan batas di prompt klasifikasi_system.md aturan 6
 _POLA_TANGGAL = re.compile(r"^\d{4}-\d{2}-\d{2}$")
 _KOSONG = {"", "-", "null", "none", "n/a", "na", "tidak ada", "tidak ditemukan", "tidak diketahui"}
 
@@ -100,6 +101,9 @@ def skema_json_llm(semua_jenis: list[str]) -> dict:
             "periode": teks_opsional,
             "dosen_terkait": {
                 "type": "array",
+                # Dikunci di skema, bukan hanya di prompt: SK dengan lampiran puluhan dosen membuat
+                # model menyalin semuanya sampai jawaban terpotong sebelum sempat menulis `jenis`.
+                "maxItems": MAKS_DOSEN_TERKAIT,
                 "items": {
                     "type": "object",
                     "properties": {"nama": {"type": "string"}, "nip": teks_opsional, "peran": teks_opsional},

@@ -332,3 +332,70 @@ def test_metadata_tidak_tertulis_dikosongkan_dengan_catatan(settings):
     benar = klasifikasi(TEKS_SK, LLMPalsu([jawaban()]), load_taxonomy(), settings)
     assert benar.metadata["nomor_dokumen"] == "123/AKD/FIF/2026"
     assert benar.metadata["tanggal_terbit"] == "2026-08-15"
+
+
+def test_klien_ollama_mengunci_ukuran_konteks(monkeypatch):
+    """Tanpa num_ctx, server Ollama bisa memakai konteks 4.096 dan memotong prompt; bawaan 16.384 cukup untuk prompt terpanjang."""
+    import httpx
+
+    from pipeline.llm import KlienOllama
+
+    terkirim = {}
+
+    def post_palsu(url, json, timeout):
+        terkirim.update(json)
+        return httpx.Response(200, json={"message": {"content": "{}"}})
+
+    monkeypatch.setattr(httpx, "post", post_palsu)
+    monkeypatch.delenv("PIPELINE_NUM_CTX", raising=False)
+    KlienOllama(Settings()).chat_json("sistem", "pengguna", {}, 0.4)
+    assert terkirim["options"]["num_ctx"] == 16384
+    assert terkirim["options"]["temperature"] == 0.4
+
+
+def test_skema_membatasi_jumlah_dosen_terkait():
+    """SK berlampiran puluhan dosen tidak boleh membuat jawaban LLM meluber sampai `jenis` tidak tertulis."""
+    from pipeline.schemas import MAKS_DOSEN_TERKAIT, skema_json_llm
+
+    skema = skema_json_llm(load_taxonomy().semua_jenis)
+    assert skema["properties"]["dosen_terkait"]["maxItems"] == MAKS_DOSEN_TERKAIT == 10
+
+
+def _geser_font_rusak(teks: str) -> str:
+    """Tiru PDF dengan pemetaan font rusak: setiap huruf bergeser 29 kode (contoh "Nama" -> "1DPD")."""
+    return "".join(chr(ord(c) - 29) if c.isalpha() else c for c in teks)
+
+
+KALIMAT_LAMPIRAN = (
+    "Semester Genap Tahun Akademik Kode Nama Mata Kuliah Kelas Dosen Pengajar Universitas Telkom "
+    "Program Studi Informatika Fakultas Informatika Jaringan Komputer Sistem Paralel Terdistribusi "
+)
+
+
+def test_teks_rusak_dikenali_dan_teks_normal_tidak():
+    from pipeline.extract import teks_rusak
+
+    assert _geser_font_rusak("Nama") == "1DPD"
+    assert teks_rusak(_geser_font_rusak(KALIMAT_LAMPIRAN * 3))
+    assert not teks_rusak(KALIMAT_LAMPIRAN * 3)
+    # tabel nilai dengan NIM, kode mata kuliah, dan nilai huruf tidak boleh dianggap rusak
+    assert not teks_rusak("No NIM Nama Nilai Indeks Kelas IF-44-01 CII2J4 " + "1 1301204001 BUDI SANTOSO AB " * 10)
+
+
+def test_halaman_teks_rusak_diperlakukan_seperti_scan(tmp_path, settings):
+    import pymupdf as fitz
+
+    p = tmp_path / "sk_lampiran_rusak.pdf"
+    doc = fitz.open()
+    doc.new_page().insert_text((50, 72), TEKS_SK.replace("\n", " ")[:90])
+    rusak = _geser_font_rusak(KALIMAT_LAMPIRAN * 2)
+    halaman = doc.new_page()
+    for i in range(0, len(rusak), 90):
+        halaman.insert_text((40, 60 + i // 90 * 14), rusak[i:i + 90])
+    doc.save(p)
+
+    h = ekstrak_teks(p, settings, ocr_fn=ocr_palsu)
+    assert h.halaman_di_ocr == [1]
+    assert h.jenis_berkas == "pdf_digital"  # halaman kosong yang menentukan scan, bukan halaman rusak
+    assert "1DPD" not in h.teks and "KEPUTUSAN DEKAN" in h.teks
+    assert any("rusak" in c for c in h.catatan)
